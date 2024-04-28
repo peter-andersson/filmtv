@@ -1,7 +1,22 @@
 ﻿@page "/"
 
-<PageTitle>Home</PageTitle>
+<MudContainer MaxWidth="MaxWidth.Small">
 
-<h1>Hello, world!</h1>
+<PageTitle>FilmTV</PageTitle>
 
-Welcome to your new app.
+<MudText Typo="Typo.h1">FilmTV</MudText>
+
+<MudText>A minimalistic movie and tv show tracker</MudText>
+
+<MudButton Href="Account/Login" Variant="Variant.Filled" Color="Color.Success">Login</MudButton>
+<MudButton Href="Account/Register" Variant="Variant.Filled" Color="Color.Primary">Register</MudButton>
+
+<MudButton Href="https://github.com/peter-andersson/filmtv"
+               Target="_blank"
+               Variant="Variant.Filled"
+               EndIcon="@Icons.Custom.Brands.GitHub"
+               Color="Color.Info">
+        View code
+    </MudButton>
+
+</MudContainer>

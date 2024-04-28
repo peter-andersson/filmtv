@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using FilmTV.Components;
 using FilmTV.Components.Account;
 using FilmTV.Data;
+using MudBlazor.Services;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
@@ -72,6 +73,8 @@ builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.Requ
     .AddDefaultTokenProviders();
 
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
+
+builder.Services.AddMudServices();
 
 var app = builder.Build();
 
