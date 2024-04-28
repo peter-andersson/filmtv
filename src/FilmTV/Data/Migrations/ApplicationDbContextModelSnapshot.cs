@@ -86,6 +86,38 @@ namespace FilmTV.Data.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
+            modelBuilder.Entity("FilmTV.Data.Episode", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime?>("AirDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("EpisodeNumber")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("SeasonId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TVShowId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TVShowId");
+
+                    b.ToTable("Episodes");
+                });
+
             modelBuilder.Entity("FilmTV.Data.Movie", b =>
                 {
                     b.Property<int>("Id")
@@ -120,6 +152,68 @@ namespace FilmTV.Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Movies");
+                });
+
+            modelBuilder.Entity("FilmTV.Data.TVShow", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ETag")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("ImdbId")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTime?>("NextUpdate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("OriginalTitle")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<int>("TvDbId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("TVShows");
+                });
+
+            modelBuilder.Entity("FilmTV.Data.UserEpisode", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("EpisodeId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTime?>("WatchedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EpisodeId");
+
+                    b.ToTable("UserEpisodes");
                 });
 
             modelBuilder.Entity("FilmTV.Data.UserMovie", b =>
@@ -157,6 +251,40 @@ namespace FilmTV.Data.Migrations
                     b.HasIndex("MovieId");
 
                     b.ToTable("UserMovies");
+                });
+
+            modelBuilder.Entity("FilmTV.Data.UserTVShow", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("Rating")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("RatingDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("TVShowId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TVShowId");
+
+                    b.ToTable("UserTVShows");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -291,6 +419,28 @@ namespace FilmTV.Data.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("FilmTV.Data.Episode", b =>
+                {
+                    b.HasOne("FilmTV.Data.TVShow", "TVShow")
+                        .WithMany("Episodes")
+                        .HasForeignKey("TVShowId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("TVShow");
+                });
+
+            modelBuilder.Entity("FilmTV.Data.UserEpisode", b =>
+                {
+                    b.HasOne("FilmTV.Data.Episode", "Episode")
+                        .WithMany()
+                        .HasForeignKey("EpisodeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Episode");
+                });
+
             modelBuilder.Entity("FilmTV.Data.UserMovie", b =>
                 {
                     b.HasOne("FilmTV.Data.Movie", "Movie")
@@ -300,6 +450,17 @@ namespace FilmTV.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Movie");
+                });
+
+            modelBuilder.Entity("FilmTV.Data.UserTVShow", b =>
+                {
+                    b.HasOne("FilmTV.Data.TVShow", "TVShow")
+                        .WithMany()
+                        .HasForeignKey("TVShowId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("TVShow");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -351,6 +512,11 @@ namespace FilmTV.Data.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("FilmTV.Data.TVShow", b =>
+                {
+                    b.Navigation("Episodes");
                 });
 #pragma warning restore 612, 618
         }
