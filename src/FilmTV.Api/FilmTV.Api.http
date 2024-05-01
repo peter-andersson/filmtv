@@ -1,6 +1,41 @@
-@FilmTV.Api_HostAddress = http://localhost:5041
+@FilmTV.Api_HostAddress = https://localhost:7226
 
 GET {{FilmTV.Api_HostAddress}}/weatherforecast/
+Authorization: Bearer {{access_token}}
 Accept: application/json
 
-###
+### Register a new user
+POST {{FilmTV.Api_HostAddress}}/account/register
+Content-Type: application/json
+
+{
+  "password": "TestSecret123!",
+  "email": "test@example.com"
+}
+
+### Login and retrieve tokens
+POST {{FilmTV.Api_HostAddress}}/account/login
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "password": "TestSecret123!"
+}
+
+> {%
+  client.global.set("access_token", response.body.accessToken);
+  client.global.set("refresh_token", response.body.refreshToken);
+%}
+
+### Fetch a new access token
+POST {{FilmTV.Api_HostAddress}}/account/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refresh_token}}"
+}
+
+> {%
+    client.global.set("access_token", response.body.accessToken);
+    client.global.set("refresh_token", response.body.refreshToken);
+%}
