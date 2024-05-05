@@ -3,51 +3,15 @@ using System.Security.Claims;
 using DbUp;
 using FilmTV.Api;
 using FilmTV.Api.Auth;
+using FilmTV.Api.Features;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using OpenTelemetry.Logs;
-using OpenTelemetry.Metrics;
-using OpenTelemetry.Trace;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Logging.AddOpenTelemetry(logging =>
-{
-    logging.IncludeFormattedMessage = true;
-    logging.IncludeScopes = true;
-});
-
-builder.Services.AddOpenTelemetry()
-    .WithMetrics(metrics =>
-    {
-        metrics.AddRuntimeInstrumentation()
-            .AddMeter("Microsoft.AspNetCore.Hosting", "Microsoft.AspNetCore.Server.Kestrel", "System.Net.Http");
-    })
-    .WithTracing(tracing =>
-    {
-        if (builder.Environment.IsDevelopment())
-        {
-            tracing.SetSampler(new AlwaysOnSampler());
-        }
-
-        tracing.SetErrorStatusOnException();
-
-        tracing.AddAspNetCoreInstrumentation()
-            .AddHttpClientInstrumentation()
-            .AddEntityFrameworkCoreInstrumentation();
-    });
-
-// ReSharper disable once StringLiteralTypo
-// ReSharper disable once IdentifierTypo
-var useOtlpExporter = !string.IsNullOrWhiteSpace(builder.Configuration["OTEL_EXPORTER_OTLP_ENDPOINT"]);
-if (useOtlpExporter)
-{
-    builder.Services.Configure<OpenTelemetryLoggerOptions>(logging => logging.AddOtlpExporter());
-    builder.Services.ConfigureOpenTelemetryMeterProvider(metrics => metrics.AddOtlpExporter());
-    builder.Services.ConfigureOpenTelemetryTracerProvider(tracing => tracing.AddOtlpExporter());
-}
+builder.AddApplicationTelemetry();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -66,14 +30,14 @@ builder.Services
         options.AddPolicy(
             "user",
             policy => policy.Requirements.Add(
-                new HasScopeRequirement("user", $"https://{builder.Configuration["Auth0:Domain"]}/")
+                new HasScopeRequirement("write:filmtv", $"https://{builder.Configuration["Auth0:Domain"]}/")
             )
         );
         
         options.AddPolicy(
             "admin",
             policy => policy.Requirements.Add(
-                new HasScopeRequirement("admin", $"https://{builder.Configuration["Auth0:Domain"]}/")
+                new HasScopeRequirement("admin:filmtv", $"https://{builder.Configuration["Auth0:Domain"]}/")
             )
         );        
     });
@@ -135,15 +99,19 @@ var summaries = new[]
     "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
 };
 
+app.MapApplicationEndpoints();
+
 // ReSharper disable once StringLiteralTypo
-app.MapGet("/weatherforecast", () =>
+app.MapGet("/weatherforecast", (ClaimsPrincipal user) =>
     {
+        
         var forecast = Enumerable.Range(1, 5).Select(index =>
                 new WeatherForecast
                 (
                     DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
                     Random.Shared.Next(-20, 55),
-                    summaries[Random.Shared.Next(summaries.Length)]
+                    summaries[Random.Shared.Next(summaries.Length)],
+                    user?.Identity?.Name
                 ))
             .ToArray();
         
@@ -169,7 +137,7 @@ if (!result.Successful)
 
 app.Run();
 
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
+record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary, string? UserId)
 {
     public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
 }
