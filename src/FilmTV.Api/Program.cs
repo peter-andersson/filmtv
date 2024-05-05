@@ -1,5 +1,12 @@
-using FilmTV.Data;
-using Microsoft.EntityFrameworkCore;
+using System.Reflection;
+using System.Security.Claims;
+using DbUp;
+using FilmTV.Api;
+using FilmTV.Api.Auth;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
@@ -32,6 +39,8 @@ builder.Services.AddOpenTelemetry()
             .AddEntityFrameworkCoreInstrumentation();
     });
 
+// ReSharper disable once StringLiteralTypo
+// ReSharper disable once IdentifierTypo
 var useOtlpExporter = !string.IsNullOrWhiteSpace(builder.Configuration["OTEL_EXPORTER_OTLP_ENDPOINT"]);
 if (useOtlpExporter)
 {
@@ -40,19 +49,74 @@ if (useOtlpExporter)
     builder.Services.ConfigureOpenTelemetryTracerProvider(tracing => tracing.AddOtlpExporter());
 }
 
-builder.Services.AddAuthorization();
-
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
-builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseNpgsql(connectionString));
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.Authority = $"https://{builder.Configuration["Auth0:Domain"]}/";
+        options.Audience = builder.Configuration["Auth0:Audience"];
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            NameClaimType = ClaimTypes.NameIdentifier
+        };
+    });
 
 builder.Services
-    .AddIdentityApiEndpoints<ApplicationUser>()
-    .AddEntityFrameworkStores<ApplicationDbContext>();
+    .AddAuthorization(options =>
+    {
+        options.AddPolicy(
+            "user",
+            policy => policy.Requirements.Add(
+                new HasScopeRequirement("user", $"https://{builder.Configuration["Auth0:Domain"]}/")
+            )
+        );
+        
+        options.AddPolicy(
+            "admin",
+            policy => policy.Requirements.Add(
+                new HasScopeRequirement("admin", $"https://{builder.Configuration["Auth0:Domain"]}/")
+            )
+        );        
+    });
+
+builder.Services.AddSingleton<IAuthorizationHandler, HasScopeHandler>();
 
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Description = """
+                      JWT Authorization header using the Bearer scheme. \r\n\r\n
+                                            Enter 'Bearer' [space] and then your token in the text input below.
+                                            \r\n\r\nExample: 'Bearer 12345'
+                      """,
+        Name = "Authorization",
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Bearer"
+    });
+    
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement()
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                },
+                Scheme = "oauth2",
+                Name = "Bearer",
+                In = ParameterLocation.Header,
+
+            },
+            new List<string>()
+        }
+    });    
+});
 
 var app = builder.Build();
 
@@ -63,15 +127,15 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseAuthentication();
 app.UseAuthorization();
-
-app.MapGroup("/account").MapIdentityApi<ApplicationUser>().WithOpenApi();
 
 var summaries = new[]
 {
     "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
 };
 
+// ReSharper disable once StringLiteralTypo
 app.MapGet("/weatherforecast", () =>
     {
         var forecast = Enumerable.Range(1, 5).Select(index =>
@@ -82,11 +146,26 @@ app.MapGet("/weatherforecast", () =>
                     summaries[Random.Shared.Next(summaries.Length)]
                 ))
             .ToArray();
-        return forecast;
+        
+        return TypedResults.Ok(forecast);
     })
     .WithName("GetWeatherForecast")
     .RequireAuthorization()
+    .Produces(StatusCodes.Status401Unauthorized)
     .WithOpenApi();
+
+var logger = app.Services.GetRequiredService<ILogger<DbLogger>>();
+var upgradeEngine = DeployChanges.To
+    .PostgresqlDatabase(builder.Configuration["ConnectionStrings:DefaultConnection"])
+    .WithScriptsEmbeddedInAssembly(Assembly.GetExecutingAssembly())
+    .LogTo(new DbLogger(logger))
+    .Build();
+
+var result = upgradeEngine.PerformUpgrade();
+if (!result.Successful)
+{
+    logger.LogCritical("Database upgrade failed: {Error}", result.Error);
+}
 
 app.Run();
 
