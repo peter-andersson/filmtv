@@ -14,7 +14,12 @@ builder.AddApplicationTelemetry();
 builder.Services.AddAuthorization();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+{
+    options.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
+    options.UseNpgsql(
+        builder.Configuration.GetConnectionString("DefaultConnection"),
+        o => o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery));
+});
 
 builder.Services
     .AddIdentityApiEndpoints<AppUser>()

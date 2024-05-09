@@ -15,7 +15,7 @@ public sealed class DeleteMovie : IEndpoint
                     await HandleAsync(id, user, database, cancellationToken)
             )
             .RequireAuthorization()
-            .Produces(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status204NoContent)
             .Produces(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status500InternalServerError)
             .WithName("Delete")
@@ -43,6 +43,6 @@ public sealed class DeleteMovie : IEndpoint
             .Where(m => m.MovieId == id && m.UserId == userId)
             .ExecuteDeleteAsync(cancellationToken);
         
-        return Results.Ok();
+        return Results.NoContent();
     }
 }

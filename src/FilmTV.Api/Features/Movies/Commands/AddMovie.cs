@@ -18,7 +18,8 @@ public sealed class AddMovie : IEndpoint
                     await HandleAsync(id, user, database, tmdbService, cancellationToken)
             )
             .RequireAuthorization()
-            .Produces(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status204NoContent)
+            .Produces(StatusCodes.Status409Conflict)
             .Produces(StatusCodes.Status401Unauthorized)
             .Produces(StatusCodes.Status500InternalServerError)
             .WithName("Add")
@@ -77,7 +78,7 @@ public sealed class AddMovie : IEndpoint
 
         if (userMovie is not null)
         {
-            return Results.Ok();
+            return Results.Conflict();
         }
 
         userMovie = new UserMovie
@@ -90,6 +91,6 @@ public sealed class AddMovie : IEndpoint
 
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        return Results.Ok();
+        return Results.NoContent();
     }
 }

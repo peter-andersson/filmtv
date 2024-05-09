@@ -3,6 +3,7 @@ using System.Security.Principal;
 using FilmTV.Api.Common.Features;
 using FilmTV.Api.Common.Persistence;
 using FluentValidation;
+using JetBrains.Annotations;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -38,6 +39,12 @@ public sealed class UpdateMovie : IEndpoint
     private static async ValueTask<IResult> HandleAsync(int id, UpdateMovieDto updateMovie, IPrincipal user, AppDbContext dbContext,
         CancellationToken cancellationToken)
     {
+        var userId = user.Identity?.Name;
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            return Results.Unauthorized();
+        }        
+        
         var validationResult = await Validator.ValidateAsync(updateMovie, cancellationToken);
 
         if (!validationResult.IsValid) 
@@ -45,13 +52,8 @@ public sealed class UpdateMovie : IEndpoint
             return Results.ValidationProblem(validationResult.ToDictionary());
         }
         
-        var userId = user.Identity?.Name;
-        if (string.IsNullOrWhiteSpace(userId))
-        {
-            return Results.Unauthorized();
-        }
-        
         var userMovie = await dbContext.UserMovies
+            .AsTracking()
             .Where(m => m.MovieId == id && m.UserId == userId)
             .FirstOrDefaultAsync(cancellationToken);
 
@@ -73,6 +75,7 @@ public sealed class UpdateMovie : IEndpoint
         return Results.Ok();
     }
     
+    [UsedImplicitly]
     private record UpdateMovieDto(int MovieId, string? Title, DateTime? WatchedDate, int Rating);
     
     private class UpdateMovieValidator : AbstractValidator<UpdateMovieDto> 
