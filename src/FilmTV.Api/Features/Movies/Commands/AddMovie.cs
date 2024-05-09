@@ -13,7 +13,7 @@ public sealed class AddMovie : IEndpoint
 {
     public static void MapEndpoint(IEndpointRouteBuilder endpoints)
     {
-        endpoints.MapPost("/movie/add/{id:int}",
+        endpoints.MapPost("/movie/{id:int}",
             async (int id, ClaimsPrincipal user, AppDbContext database, ITheMovieDatabaseService tmdbService, CancellationToken cancellationToken) =>
                     await HandleAsync(id, user, database, tmdbService, cancellationToken)
                 )
