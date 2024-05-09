@@ -39,18 +39,10 @@ public sealed class DeleteMovie : IEndpoint
             return Results.Unauthorized();
         }
 
-        var userMovie = await dbContext.UserMovies
+        await dbContext.UserMovies
             .Where(m => m.MovieId == id && m.UserId == userId)
-            .FirstOrDefaultAsync(cancellationToken);
-
-        if (userMovie is null)
-        {
-            return Results.Ok();
-        }
-
-        dbContext.UserMovies.Remove(userMovie);
-        await dbContext.SaveChangesAsync(cancellationToken);
-
+            .ExecuteDeleteAsync(cancellationToken);
+        
         return Results.Ok();
     }
 }
