@@ -39,8 +39,8 @@ builder.Services.AddSwaggerGen(c =>
         Type = SecuritySchemeType.ApiKey,
         Scheme = "Bearer"
     });
-    
-    c.AddSecurityRequirement(new OpenApiSecurityRequirement()
+
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
         {
             new OpenApiSecurityScheme
@@ -52,12 +52,11 @@ builder.Services.AddSwaggerGen(c =>
                 },
                 Scheme = "oauth2",
                 Name = "Bearer",
-                In = ParameterLocation.Header,
-
+                In = ParameterLocation.Header
             },
             new List<string>()
         }
-    });    
+    });
 });
 
 builder.Services.ConfigureFeatures(builder.Configuration, appAssembly);
@@ -73,7 +72,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseAuthorization();
 
-app.MapGroup("/account").MapIdentityApi<AppUser>();
+app.MapGroup("/account").MapIdentityApi<AppUser>().WithTags("Account");
 
 app.RegisterEndpoints(appAssembly);
 

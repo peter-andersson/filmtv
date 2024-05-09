@@ -14,7 +14,7 @@ public static class EndpointDiscovery
         {
             throw new ArgumentException("At least one assembly must be provided.", nameof(assemblies));
         }
-        
+
         var endpointTypes = GetEndpointTypes(assemblies);
 
         foreach (var type in endpointTypes)

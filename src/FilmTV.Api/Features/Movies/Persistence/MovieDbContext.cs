@@ -8,6 +8,6 @@ namespace FilmTV.Api.Common.Persistence;
 public partial class AppDbContext
 {
     public DbSet<Movie> Movies { get; set; } = null!;
-    
+
     public DbSet<UserMovie> UserMovies { get; set; } = null!;
 }

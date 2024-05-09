@@ -4,5 +4,4 @@ namespace FilmTV.Api.Common.Models;
 
 public class AppUser : IdentityUser
 {
-    
 }
