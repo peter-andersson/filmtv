@@ -1,48 +1,26 @@
 using System.Reflection;
-using System.Security.Claims;
-using DbUp;
 using FilmTV.Api;
-using FilmTV.Api.Auth;
-using FilmTV.Api.Features;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.IdentityModel.Tokens;
+using FilmTV.Api.Common.Models;
+using FilmTV.Api.Common.Persistence;
+using FilmTV.Api.Host;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 
+var appAssembly = Assembly.GetExecutingAssembly();
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddApplicationTelemetry();
 
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
-    {
-        options.Authority = $"https://{builder.Configuration["Auth0:Domain"]}/";
-        options.Audience = builder.Configuration["Auth0:Audience"];
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            NameClaimType = ClaimTypes.NameIdentifier
-        };
-    });
+builder.Services.AddAuthorization();
+
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services
-    .AddAuthorization(options =>
-    {
-        options.AddPolicy(
-            "user",
-            policy => policy.Requirements.Add(
-                new HasScopeRequirement("write:filmtv", $"https://{builder.Configuration["Auth0:Domain"]}/")
-            )
-        );
-        
-        options.AddPolicy(
-            "admin",
-            policy => policy.Requirements.Add(
-                new HasScopeRequirement("admin:filmtv", $"https://{builder.Configuration["Auth0:Domain"]}/")
-            )
-        );        
-    });
+    .AddIdentityApiEndpoints<AppUser>()
+    .AddEntityFrameworkStores<AppDbContext>();
 
-builder.Services.AddSingleton<IAuthorizationHandler, HasScopeHandler>();
+builder.Services.AddHttpClient();
 
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -82,6 +60,8 @@ builder.Services.AddSwaggerGen(c =>
     });    
 });
 
+builder.Services.ConfigureFeatures(builder.Configuration, appAssembly);
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -91,53 +71,10 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseAuthentication();
 app.UseAuthorization();
 
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
+app.MapGroup("/account").MapIdentityApi<AppUser>();
 
-app.MapApplicationEndpoints();
-
-// ReSharper disable once StringLiteralTypo
-app.MapGet("/weatherforecast", (ClaimsPrincipal user) =>
-    {
-        
-        var forecast = Enumerable.Range(1, 5).Select(index =>
-                new WeatherForecast
-                (
-                    DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-                    Random.Shared.Next(-20, 55),
-                    summaries[Random.Shared.Next(summaries.Length)],
-                    user?.Identity?.Name
-                ))
-            .ToArray();
-        
-        return TypedResults.Ok(forecast);
-    })
-    .WithName("GetWeatherForecast")
-    .RequireAuthorization()
-    .Produces(StatusCodes.Status401Unauthorized)
-    .WithOpenApi();
-
-var logger = app.Services.GetRequiredService<ILogger<DbLogger>>();
-var upgradeEngine = DeployChanges.To
-    .PostgresqlDatabase(builder.Configuration["ConnectionStrings:DefaultConnection"])
-    .WithScriptsEmbeddedInAssembly(Assembly.GetExecutingAssembly())
-    .LogTo(new DbLogger(logger))
-    .Build();
-
-var result = upgradeEngine.PerformUpgrade();
-if (!result.Successful)
-{
-    logger.LogCritical("Database upgrade failed: {Error}", result.Error);
-}
+app.RegisterEndpoints(appAssembly);
 
 app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary, string? UserId)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}

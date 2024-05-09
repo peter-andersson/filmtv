@@ -9,11 +9,15 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="dbup-core" Version="5.0.87" />
-        <PackageReference Include="dbup-postgresql" Version="5.0.40" />
         <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.4" />
+        <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.4" />
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.4" />
-        <PackageReference Include="Npgsql" Version="8.0.2" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.4" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.4">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.2" />
         <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0"/>
         <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.8.1" />
         <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.8.1" />
@@ -31,7 +35,14 @@
 
     <ItemGroup>
       <None Remove="Scripts\001-create-tables.sql" />
-      <EmbeddedResource Include="Scripts\001-create-tables.sql" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\TheMovieDatabase\TheMovieDatabase.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Features\Movies\Queries\" />
     </ItemGroup>
 
 </Project>
