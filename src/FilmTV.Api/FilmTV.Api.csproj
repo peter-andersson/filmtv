@@ -20,6 +20,7 @@
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.2"/>
+        <PackageReference Include="OneOf" Version="3.0.263" />
         <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0"/>
         <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.8.1"/>
         <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.8.1"/>
@@ -37,10 +38,6 @@
 
     <ItemGroup>
         <None Remove="Scripts\001-create-tables.sql"/>
-    </ItemGroup>
-
-    <ItemGroup>
-        <ProjectReference Include="..\TheMovieDatabase\TheMovieDatabase.csproj"/>
     </ItemGroup>
 
 </Project>
