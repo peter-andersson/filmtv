@@ -1,3 +1,4 @@
+using FilmTV.Api.Features.Images;
 using FilmTV.Api.Features.Movies;
 
 namespace FilmTV.Api.Host;
@@ -10,5 +11,6 @@ public static class ApplicationRoutes
     public static void MapApplicationRoutes(this IEndpointRouteBuilder app)
     {
         app.MapMovieRoutes();
+        app.MapImageRoutes();
     }
 }

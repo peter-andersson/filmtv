@@ -2,7 +2,7 @@ using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace FilmTV.Api.Features.TheMovieDatabase.Models;
+namespace FilmTV.Api.Features.TheMovieDatabase;
 
 public class DateTimeConverter : JsonConverter<DateTime?>
 {

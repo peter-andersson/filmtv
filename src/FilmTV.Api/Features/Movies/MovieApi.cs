@@ -19,7 +19,7 @@ public static class MovieApi
     
     private static RouteGroupBuilder MapMovieApi(this RouteGroupBuilder group)
     {
-        group.MapPost("/{id:int}", AddMovieAsync)
+        group.MapPost("/{id:int}", AddHandler)
             .Produces<MovieResponse>()
             .Produces(StatusCodes.Status404NotFound)
             .Produces(StatusCodes.Status409Conflict)
@@ -31,7 +31,7 @@ public static class MovieApi
                 return operation;
             });    
         
-        group.MapDelete("/{id:int}", DeleteMovieAsync)
+        group.MapDelete("/{id:int}", DeleteHandler)
             .Produces(StatusCodes.Status204NoContent)
             .WithSummary("Delete a movie")
             .WithDescription("Delete a movie from the user's list of movies.")
@@ -41,7 +41,7 @@ public static class MovieApi
                 return operation;
             });
         
-        group.MapGet("/{id:int}", GetMovieAsync)
+        group.MapGet("/{id:int}", GetHandler)
             .Produces<MovieResponse>()
             .Produces(StatusCodes.Status404NotFound)
             .WithSummary("Get a movie")
@@ -52,7 +52,7 @@ public static class MovieApi
                 return operation;
             });
         
-        group.MapPut("/movie/reload/{id:int}", RefreshMovieAsync)
+        group.MapPut("/movie/reload/{id:int}", RefreshHandler)
             .Produces(StatusCodes.Status204NoContent)
             .Produces(StatusCodes.Status404NotFound)
             .WithSummary("Update movie data from the themoviedb.org")
@@ -63,12 +63,12 @@ public static class MovieApi
                 return operation;
             });
             
-        group.MapGet("/watchlist", GetWatchlistAsync)
+        group.MapGet("/watchlist", WatchlistHandler)
             .Produces<IEnumerable<WatchlistMovieResponse>>()
             .WithSummary("Get unwatched movies")
             .WithDescription("Get all unwatched movies from the user's watchlist.");
         
-        group.MapPut("/{id:int}", UpdateMovieAsync)
+        group.MapPut("/{id:int}", UpdateHandler)
              .Produces<MovieResponse>()
              .ProducesValidationProblem()
              .Produces(StatusCodes.Status404NotFound)
@@ -83,7 +83,7 @@ public static class MovieApi
         return group;
     }
     
-    private static async Task<IResult> AddMovieAsync(
+    private static async Task<IResult> AddHandler(
         int id,
         ClaimsPrincipal user,
         IMovieService movieService,
@@ -91,7 +91,7 @@ public static class MovieApi
     {
         var userId = user.Identity?.Name ?? string.Empty;
 
-        var result = await movieService.AddMovieAsync(id, userId, cancellationToken);
+        var result = await movieService.Add(id, userId, cancellationToken);
 
         return result.Match(
             movieDto => Results.Ok(movieDto),
@@ -100,7 +100,7 @@ public static class MovieApi
         );
     }
     
-    private static async Task<IResult> DeleteMovieAsync(
+    private static async Task<IResult> DeleteHandler(
         int id,
         ClaimsPrincipal user,
         IMovieService movieService,
@@ -108,12 +108,12 @@ public static class MovieApi
     {
         var userId = user.Identity?.Name ?? string.Empty;
 
-        await movieService.DeleteMovieAsync(id, userId, cancellationToken);
+        await movieService.Delete(id, userId, cancellationToken);
 
         return Results.NoContent();
     }
     
-    private static async Task<IResult> GetMovieAsync(
+    private static async Task<IResult> GetHandler(
         int id,
         ClaimsPrincipal user,
         IMovieService movieService,
@@ -121,7 +121,7 @@ public static class MovieApi
     {
         var userId = user.Identity?.Name ?? string.Empty;
 
-        var result = await movieService.GetMovieAsync(id, userId, cancellationToken);
+        var result = await movieService.Get(id, userId, cancellationToken);
 
         return result.Match(
             movieDto => Results.Ok(movieDto),
@@ -129,12 +129,12 @@ public static class MovieApi
         );
     }
     
-    private static async Task<IResult> RefreshMovieAsync(
+    private static async Task<IResult> RefreshHandler(
         int id,
         IMovieService movieService,
         CancellationToken cancellationToken)
     {
-        var result = await movieService.RefreshMovieAsync(id, cancellationToken);
+        var result = await movieService.Refresh(id, cancellationToken);
 
         return result.Match(
             success => Results.NoContent(),
@@ -142,16 +142,16 @@ public static class MovieApi
         );
     }
     
-    private static async Task<IResult> GetWatchlistAsync(ClaimsPrincipal user, IMovieService movieService, CancellationToken cancellationToken)
+    private static async Task<IResult> WatchlistHandler(ClaimsPrincipal user, IMovieService movieService, CancellationToken cancellationToken)
     {
         var userId = user.Identity?.Name ?? string.Empty;
 
-        var result = await movieService.GetWatchlistAsync(userId, cancellationToken);
+        var result = await movieService.GetWatchlist(userId, cancellationToken);
                     
         return Results.Ok(result);
     }
     
-    private static async Task<IResult> UpdateMovieAsync(
+    private static async Task<IResult> UpdateHandler(
         int id,
         [FromBody] UpdateMovieRequest updateMovie,
         ClaimsPrincipal user,
@@ -160,7 +160,7 @@ public static class MovieApi
     {
         var userId = user.Identity?.Name ?? string.Empty;
 
-        var result = await movieService.UpdateMovieAsync(id, userId, updateMovie, cancellationToken);
+        var result = await movieService.Update(id, userId, updateMovie, cancellationToken);
                 
         return result.Match(
             movieDto => Results.Ok(movieDto),

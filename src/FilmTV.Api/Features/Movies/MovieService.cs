@@ -9,30 +9,30 @@ namespace FilmTV.Api.Features.Movies;
 
 public interface IMovieService
 {
-    Task<OneOf<MovieResponse, NotFound, Conflict>> AddMovieAsync(int id, string userId, CancellationToken cancellationToken);
+    Task<OneOf<MovieResponse, NotFound, Conflict>> Add(int id, string userId, CancellationToken cancellationToken);
     
-    Task DeleteMovieAsync(int id, string userId, CancellationToken cancellationToken);
+    Task Delete(int id, string userId, CancellationToken cancellationToken);
     
-    Task<OneOf<MovieResponse, NotFound>> GetMovieAsync(int id, string userId, CancellationToken cancellationToken);
+    Task<OneOf<MovieResponse, NotFound>> Get(int id, string userId, CancellationToken cancellationToken);
 
-    Task<IEnumerable<WatchlistMovieResponse>> GetWatchlistAsync(string userId, CancellationToken cancellationToken);
+    Task<IEnumerable<WatchlistMovieResponse>> GetWatchlist(string userId, CancellationToken cancellationToken);
     
-    Task<OneOf<Success, NotFound>> RefreshMovieAsync(int id, CancellationToken cancellationToken);
+    Task<OneOf<Success, NotFound>> Refresh(int id, CancellationToken cancellationToken);
     
-    Task<OneOf<MovieResponse, NotFound, ValidationError>> UpdateMovieAsync(int id, string userId, UpdateMovieRequest updateMovie, CancellationToken cancellationToken);
+    Task<OneOf<MovieResponse, NotFound, ValidationError>> Update(int id, string userId, UpdateMovieRequest updateMovie, CancellationToken cancellationToken);
 }
 
 public class MovieService(ILogger<MovieService> logger, AppDbContext dbContext, ITheMovieDatabaseService tmdbService) : IMovieService
 {
     private static readonly UpdateMovieValidator UpdateValidator = new();
     
-    public async Task<OneOf<MovieResponse, NotFound, Conflict>> AddMovieAsync(int id, string userId, CancellationToken cancellationToken)
+    public async Task<OneOf<MovieResponse, NotFound, Conflict>> Add(int id, string userId, CancellationToken cancellationToken)
     {
         var movie = await dbContext.Movies.Where(m => m.MovieId == id).FirstOrDefaultAsync(cancellationToken);
 
         if (movie is not null)
         {
-            var tmdbMovie = await tmdbService.GetMovieAsync(id, null);
+            var tmdbMovie = await tmdbService.GetMovie(id, null);
             if (tmdbMovie is null)
             {
                 logger.LogError("Movie with id {MovieId} not found on themoviedb.org", id);
@@ -51,6 +51,8 @@ public class MovieService(ILogger<MovieService> logger, AppDbContext dbContext, 
             };
 
             dbContext.Movies.Add(movie);
+            
+            await DownloadMoviePoster(tmdbMovie, cancellationToken);
         }
 
         if (movie is null)
@@ -81,15 +83,15 @@ public class MovieService(ILogger<MovieService> logger, AppDbContext dbContext, 
         
         return userMovie.ToDto();
     }
-
-    public async Task DeleteMovieAsync(int id, string userId, CancellationToken cancellationToken)
+    
+    public async Task Delete(int id, string userId, CancellationToken cancellationToken)
     {
         await dbContext.UserMovies
              .Where(m => m.MovieId == id && m.UserId == userId)
              .ExecuteDeleteAsync(cancellationToken);
     }
 
-    public async Task<OneOf<MovieResponse, NotFound>> GetMovieAsync(int id, string userId, CancellationToken cancellationToken)
+    public async Task<OneOf<MovieResponse, NotFound>> Get(int id, string userId, CancellationToken cancellationToken)
     {
          var userMovie = await dbContext.UserMovies
              .Where(m => m.MovieId == id).Include(m => m.Movie)
@@ -103,7 +105,7 @@ public class MovieService(ILogger<MovieService> logger, AppDbContext dbContext, 
          return userMovie.ToDto();
     }
     
-    public async Task<IEnumerable<WatchlistMovieResponse>> GetWatchlistAsync(string userId, CancellationToken cancellationToken)
+    public async Task<IEnumerable<WatchlistMovieResponse>> GetWatchlist(string userId, CancellationToken cancellationToken)
     {
         var movies = await dbContext.UserMovies
             .Where(m => m.UserId == userId && m.WatchedDate == null)
@@ -113,7 +115,7 @@ public class MovieService(ILogger<MovieService> logger, AppDbContext dbContext, 
         return movies.Select(userMovie => new WatchlistMovieResponse(userMovie.MovieId, userMovie.Title ?? userMovie.Movie.OriginalTitle));
     }
 
-    public async Task<OneOf<Success, NotFound>> RefreshMovieAsync(int id, CancellationToken cancellationToken)
+    public async Task<OneOf<Success, NotFound>> Refresh(int id, CancellationToken cancellationToken)
     {
         var movie = await dbContext.Movies.AsTracking().Where(m => m.MovieId == id).FirstOrDefaultAsync(cancellationToken);
 
@@ -122,11 +124,13 @@ public class MovieService(ILogger<MovieService> logger, AppDbContext dbContext, 
              return new NotFound();
          }
 
-         var tmdbMovie = await tmdbService.GetMovieAsync(id, movie.ETag);
+         var tmdbMovie = await tmdbService.GetMovie(id, movie.ETag);
          if (tmdbMovie is null)
          {
              return new Success();
          }
+         
+         await DownloadMoviePoster(tmdbMovie, cancellationToken);
 
          movie.OriginalTitle = tmdbMovie.OriginalTitle;
          movie.OriginalLanguage = tmdbMovie.OriginalLanguage;
@@ -140,7 +144,7 @@ public class MovieService(ILogger<MovieService> logger, AppDbContext dbContext, 
          return new Success();
     }
     
-    public async Task<OneOf<MovieResponse, NotFound, ValidationError>> UpdateMovieAsync(int id, string userId, UpdateMovieRequest updateMovie, CancellationToken cancellationToken)
+    public async Task<OneOf<MovieResponse, NotFound, ValidationError>> Update(int id, string userId, UpdateMovieRequest updateMovie, CancellationToken cancellationToken)
     {
             var validationResult = await UpdateValidator.ValidateAsync(updateMovie, cancellationToken);
 
@@ -171,6 +175,27 @@ public class MovieService(ILogger<MovieService> logger, AppDbContext dbContext, 
          await dbContext.SaveChangesAsync(cancellationToken);
 
          return userMovie.ToDto();
+    }
+
+    private async Task DownloadMoviePoster(TMDbMovie tmdbMovie, CancellationToken cancellationToken)
+    {
+        var posterUrl = await tmdbService.GetImageUrl(tmdbMovie.PosterPath);
+        if (string.IsNullOrWhiteSpace(posterUrl))
+        {
+            return;
+        }
+
+        var stream = new MemoryStream();
+        await tmdbService.DownloadImageUrlToStream(posterUrl, stream);
+
+        var filename = ImagePath.MoviePath(tmdbMovie.Id);
+        if (File.Exists(filename))
+        {
+            File.Delete(filename);
+        }
+
+        await using var fileStream = new FileStream(filename, FileMode.Create);
+        await stream.CopyToAsync(fileStream, cancellationToken);
     }
 
     private class UpdateMovieValidator : AbstractValidator<UpdateMovieRequest>

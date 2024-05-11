@@ -74,4 +74,10 @@ app.MapGroup("/account").MapIdentityApi<AppUser>().WithTags("Account");
 
 app.MapApplicationRoutes();
 
+var imagePath = Path.Combine(app.Environment.ContentRootPath, ImagePath.Directory);
+if (!Directory.Exists(imagePath))
+{
+    Directory.CreateDirectory(imagePath);
+}
+
 app.Run();

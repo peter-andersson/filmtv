@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace FilmTV.Api.Features.TheMovieDatabase.Models;
+namespace FilmTV.Api.Features.TheMovieDatabase;
 
 // ReSharper disable once InconsistentNaming
 public sealed class TMDbShow

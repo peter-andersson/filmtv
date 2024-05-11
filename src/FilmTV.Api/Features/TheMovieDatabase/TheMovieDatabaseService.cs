@@ -1,8 +1,18 @@
 using System.Net.Http.Headers;
 using System.Text.Json;
-using FilmTV.Api.Features.TheMovieDatabase.Models;
 
 namespace FilmTV.Api.Features.TheMovieDatabase;
+
+public interface ITheMovieDatabaseService
+{
+    Task<string> GetImageUrl(string? path);
+
+    Task<TMDbMovie?> GetMovie(int id, string? etag);
+
+    Task<TMDbShow?> GetShow(int id, string? etag);
+
+    Task<bool> DownloadImageUrlToStream(string url, Stream stream);
+}
 
 public sealed class TheMovieDatabaseService : ITheMovieDatabaseService
 {
@@ -20,7 +30,7 @@ public sealed class TheMovieDatabaseService : ITheMovieDatabaseService
         _httpClientFactory = httpClientFactoryFactory;
     }
 
-    public async Task<TMDbMovie?> GetMovieAsync(int id, string? etag)
+    public async Task<TMDbMovie?> GetMovie(int id, string? etag)
     {
         _logger.LogTrace("GetMovieAsync {id}, {etag}", id, etag);
         if (string.IsNullOrWhiteSpace(_apiKey))
@@ -88,7 +98,7 @@ public sealed class TheMovieDatabaseService : ITheMovieDatabaseService
         }
     }
 
-    public async Task<TMDbShow?> GetShowAsync(int id, string? etag)
+    public async Task<TMDbShow?> GetShow(int id, string? etag)
     {
         _logger.LogTrace("GetShowAsync {id}, {etag}", id, etag);
 
@@ -176,7 +186,7 @@ public sealed class TheMovieDatabaseService : ITheMovieDatabaseService
         }
     }
 
-    public async Task<string> GetImageUrlAsync(string? path)
+    public async Task<string> GetImageUrl(string? path)
     {
         _logger.LogTrace("GetImageUrlAsync {path}", path);
 
@@ -328,7 +338,7 @@ public sealed class TheMovieDatabaseService : ITheMovieDatabaseService
         }
     }
 
-    public async Task<bool> DownloadImageUrlToStreamAsync(string url, Stream stream)
+    public async Task<bool> DownloadImageUrlToStream(string url, Stream stream)
     {
         _logger.LogTrace("DownloadImageUrlToStreamAsync - {url}", url);
 
