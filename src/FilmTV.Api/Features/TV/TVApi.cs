@@ -49,7 +49,35 @@ public static class TVApi
             {
                 operation.Parameters[0].Description = "Id for the tv series";
                 return operation;
-            });        
+            });
+        
+        group.MapPut("/refresh/{id:int}", RefreshHandler)
+            .Produces(StatusCodes.Status204NoContent)
+            .Produces(StatusCodes.Status404NotFound)
+            .WithSummary("Update tv series data from the themoviedb.org")
+            .WithDescription("Fetch new data for a tv series from themoviedb.org.")
+            .WithOpenApi(operation =>
+            {
+                operation.Parameters[0].Description = "Id for the movie";
+                return operation;
+            });
+        
+        // group.MapGet("/watchlist", WatchlistHandler)
+        //     .Produces<IEnumerable<WatchlistMovieResponse>>()
+        //     .WithSummary("Get unwatched movies")
+        //     .WithDescription("Get all unwatched movies from the user's watchlist.");
+        
+        // group.MapPut("/{id:int}", UpdateHandler)
+        //     .Produces<MovieResponse>()
+        //     .ProducesValidationProblem()
+        //     .Produces(StatusCodes.Status404NotFound)
+        //     .WithSummary("Update user data for a movie")
+        //     .WithDescription("Update user specific data for the movie. This can be the title, watched date or rating.")
+        //     .WithOpenApi(operation =>
+        //     {
+        //         operation.Parameters[0].Description = "Id for the movie";
+        //         return operation;
+        //     });         
         
         return group;
     }
@@ -95,5 +123,18 @@ public static class TVApi
         await tvService.Delete(id, userId, cancellationToken);
 
         return Results.NoContent();
+    }   
+    
+    private static async Task<IResult> RefreshHandler(
+        int id,
+        ITVService tvService,
+        CancellationToken cancellationToken)
+    {
+        var result = await tvService.Refresh(id, cancellationToken);
+
+        return result.Match(
+            success => Results.NoContent(),
+            notFound => Results.NotFound()
+        );
     }    
 }
