@@ -5,7 +5,7 @@ public static class MovieMapper
     public static MovieResponse ToDto(this UserMovie userMovie)
     {
         return new MovieResponse(
-            userMovie.Id,
+            userMovie.MovieId,
             userMovie.Title,
             userMovie.Movie.OriginalTitle,
             userMovie.Movie.OriginalLanguage,
