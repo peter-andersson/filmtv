@@ -11,6 +11,8 @@ public interface ITVService
     Task<OneOf<SeriesResponse, NotFound, Conflict>> Add(int id, string userId, CancellationToken cancellationToken);
     
     Task Delete(int id, string userId, CancellationToken cancellationToken);
+    
+    Task<OneOf<SeriesResponse, NotFound>> Get(int id, string userId, CancellationToken cancellationToken);
 }
 
 public class TVService(ILogger<TVService> logger, AppDbContext dbContext, ITheMovieDatabaseService tmdbService) : ITVService
@@ -106,6 +108,23 @@ public class TVService(ILogger<TVService> logger, AppDbContext dbContext, ITheMo
     public async Task Delete(int id, string userId, CancellationToken cancellationToken)
     {
         await dbContext.UserSeries.Where(s => s.UserId == userId && s.SeriesId == id).ExecuteDeleteAsync(cancellationToken);
+    }
+
+    public async Task<OneOf<SeriesResponse, NotFound>> Get(int id, string userId, CancellationToken cancellationToken)
+    {
+        var userSeries = await dbContext.UserSeries
+            .Include(s => s.Series)
+            .Include(s => s.Episodes)
+            .ThenInclude(e => e.Episode)
+            .Where(s => s.SeriesId == id && s.UserId == userId)
+            .SingleOrDefaultAsync(cancellationToken);
+
+        if (userSeries is null)
+        {
+            return new NotFound();
+        }
+        
+        return userSeries.ToDto();
     }
     
     private async Task DownloadMoviePoster(TMDbShow tmdbShow, CancellationToken cancellationToken)

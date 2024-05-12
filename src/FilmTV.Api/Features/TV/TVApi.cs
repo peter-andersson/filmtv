@@ -40,6 +40,17 @@ public static class TVApi
                 return operation;
             });
         
+        group.MapGet("/{id:int}", GetHandler)
+            .Produces<SeriesResponse>()
+            .Produces(StatusCodes.Status404NotFound)
+            .WithSummary("Get a tv series")
+            .WithDescription("Get a tv series by specifying the id.")
+            .WithOpenApi(operation =>
+            {
+                operation.Parameters[0].Description = "Id for the tv series";
+                return operation;
+            });        
+        
         return group;
     }
     
@@ -72,4 +83,17 @@ public static class TVApi
 
         return Results.NoContent();
     }
+    
+    private static async Task<IResult> GetHandler(
+        int id,
+        ClaimsPrincipal user,
+        ITVService tvService,
+        CancellationToken cancellationToken)
+    {
+        var userId = user.Identity?.Name ?? string.Empty;
+
+        await tvService.Delete(id, userId, cancellationToken);
+
+        return Results.NoContent();
+    }    
 }
