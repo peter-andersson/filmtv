@@ -82,4 +82,15 @@ if (!Directory.Exists(imagePath))
     Directory.CreateDirectory(Path.Combine(imagePath, "tv"));
 }
 
+if (app.Environment.IsDevelopment() || app.Configuration["AutomaticMigration"] == "1")
+{
+    using var scope = app.Services.CreateScope();
+    var services = scope.ServiceProvider;
+
+    var dbContext = services.GetRequiredService<AppDbContext>();
+    dbContext.Database.Migrate();
+
+    await dbContext.SaveChangesAsync();
+}
+
 app.Run();
