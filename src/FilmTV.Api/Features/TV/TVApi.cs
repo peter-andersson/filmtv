@@ -30,23 +30,46 @@ public static class TVApi
                 return operation;
             });  
         
+        group.MapDelete("/{id:int}", DeleteHandler)
+            .Produces(StatusCodes.Status204NoContent)
+            .WithSummary("Remove a tv series")
+            .WithDescription("Remove a tv series from the system.")
+            .WithOpenApi(operation =>
+            {
+                operation.Parameters[0].Description = "Id for the tv series";
+                return operation;
+            });
+        
         return group;
     }
     
     private static async Task<IResult> AddHandler(
         int id,
         ClaimsPrincipal user,
-        ITVService movieService,
+        ITVService tvService,
         CancellationToken cancellationToken)
     {
         var userId = user.Identity?.Name ?? string.Empty;
 
-        var result = await movieService.Add(id, userId, cancellationToken);
+        var result = await tvService.Add(id, userId, cancellationToken);
 
         return result.Match(
             seriesResponse =>  Results.Ok(seriesResponse),
             notFound => Results.NotFound(),
             conflict => Results.Conflict()
         );
+    }
+    
+    private static async Task<IResult> DeleteHandler(
+        int id,
+        ClaimsPrincipal user,
+        ITVService tvService,
+        CancellationToken cancellationToken)
+    {
+        var userId = user.Identity?.Name ?? string.Empty;
+
+        await tvService.Delete(id, userId, cancellationToken);
+
+        return Results.NoContent();
     }
 }

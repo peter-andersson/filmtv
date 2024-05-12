@@ -9,6 +9,8 @@ namespace FilmTV.Api.Features.TV;
 public interface ITVService
 {
     Task<OneOf<SeriesResponse, NotFound, Conflict>> Add(int id, string userId, CancellationToken cancellationToken);
+    
+    Task Delete(int id, string userId, CancellationToken cancellationToken);
 }
 
 public class TVService(ILogger<TVService> logger, AppDbContext dbContext, ITheMovieDatabaseService tmdbService) : ITVService
@@ -99,6 +101,11 @@ public class TVService(ILogger<TVService> logger, AppDbContext dbContext, ITheMo
         await dbContext.SaveChangesAsync(cancellationToken);
         
         return userSeries.ToDto();
+    }
+
+    public async Task Delete(int id, string userId, CancellationToken cancellationToken)
+    {
+        await dbContext.UserSeries.Where(s => s.UserId == userId && s.SeriesId == id).ExecuteDeleteAsync(cancellationToken);
     }
     
     private async Task DownloadMoviePoster(TMDbShow tmdbShow, CancellationToken cancellationToken)

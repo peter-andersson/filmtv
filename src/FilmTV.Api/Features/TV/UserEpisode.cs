@@ -15,5 +15,9 @@ public class UserEpisode
     
     [MaxLength(50)]
     public string UserId { get; init; } = null!;
-    public AppUser User { get; init; } = null!;    
+    public AppUser User { get; init; } = null!;  
+    
+    public int SeriesId { get; set; }
+    [ForeignKey(nameof(SeriesId))]
+    public UserSeries UserSeries { get; set; } = null!;    
 }
