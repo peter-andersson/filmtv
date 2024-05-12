@@ -78,6 +78,8 @@ var imagePath = Path.Combine(app.Environment.ContentRootPath, ImagePath.Director
 if (!Directory.Exists(imagePath))
 {
     Directory.CreateDirectory(imagePath);
+    Directory.CreateDirectory(Path.Combine(imagePath, "movie"));
+    Directory.CreateDirectory(Path.Combine(imagePath, "tv"));
 }
 
 app.Run();
