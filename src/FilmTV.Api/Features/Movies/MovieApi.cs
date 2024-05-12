@@ -52,7 +52,7 @@ public static class MovieApi
                 return operation;
             });
         
-        group.MapPut("/movie/reload/{id:int}", RefreshHandler)
+        group.MapPut("/refresh/{id:int}", RefreshHandler)
             .Produces(StatusCodes.Status204NoContent)
             .Produces(StatusCodes.Status404NotFound)
             .WithSummary("Update movie data from the themoviedb.org")
