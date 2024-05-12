@@ -7,9 +7,9 @@ namespace FilmTV.Api.Common;
 
 public partial class AppDbContext
 {
-    public DbSet<Show> Shows { get; set; } = null!;
+    public DbSet<Series> Series { get; set; } = null!;
     
-    public DbSet<UserShow> UserShows { get; set; } = null!;
+    public DbSet<UserSeries> UserSeries { get; set; } = null!;
 
     public DbSet<Episode> Episodes { get; set; } = null!;
     

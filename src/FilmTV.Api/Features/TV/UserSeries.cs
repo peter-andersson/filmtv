@@ -4,16 +4,22 @@ using FilmTV.Api.Common;
 
 namespace FilmTV.Api.Features.TV;
 
-public class UserEpisode
+public class UserSeries
 {
     [Key, DatabaseGenerated(DatabaseGeneratedOption.None)]
-    public int EpisodeId { get; set; }
-    [ForeignKey(nameof(EpisodeId))]
-    public Episode Episode { get; set; } = null!;
+    public int SeriesId { get; set; }
+    [ForeignKey(nameof(SeriesId))]
+    public Series Series { get; set; } = null!;
     
-    public bool Watched { get; set; }
+    public string? Title { get; set; }
+    
+    public int Rating { get; set; }
+    
+    public DateTime? RatingDate { get; set; }
     
     [MaxLength(50)]
     public string UserId { get; init; } = null!;
     public AppUser User { get; init; } = null!;    
+    
+    public ICollection<UserEpisode> Episodes { get; set; } = [];
 }

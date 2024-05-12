@@ -12,6 +12,6 @@ public class Episode
 
     public DateTime? AirDate { get; set; }
     
-    public int ShowId { get; set; }
-    public Show Show { get; set; } = null!;
+    public int SeriesId { get; set; }
+    public Series Series { get; set; } = null!;
 }
