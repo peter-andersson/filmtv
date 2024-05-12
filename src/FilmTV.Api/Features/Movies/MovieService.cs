@@ -30,7 +30,7 @@ public class MovieService(ILogger<MovieService> logger, AppDbContext dbContext, 
     {
         var movie = await dbContext.Movies.Where(m => m.MovieId == id).FirstOrDefaultAsync(cancellationToken);
 
-        if (movie is not null)
+        if (movie is null)
         {
             var tmdbMovie = await tmdbService.GetMovie(id, null);
             if (tmdbMovie is null)
@@ -54,13 +54,7 @@ public class MovieService(ILogger<MovieService> logger, AppDbContext dbContext, 
             
             await DownloadMoviePoster(tmdbMovie, cancellationToken);
         }
-
-        if (movie is null)
-        {
-            logger.LogError("Movie with id {MovieId} not found", id);
-            return new NotFound();
-        }
-
+        
         var userMovie = await dbContext.UserMovies
             .Where(m => m.MovieId == id && m.UserId == userId)
             .FirstOrDefaultAsync(cancellationToken);
