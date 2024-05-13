@@ -15,6 +15,8 @@ public interface ITVService
     Task<OneOf<SeriesResponse, NotFound>> Get(int id, string userId, CancellationToken cancellationToken);
     
     Task<OneOf<Success, NotFound>> Refresh(int id, CancellationToken cancellationToken);
+    
+    Task<IEnumerable<WatchlistSeriesResponse>> GetWatchlist(string userId, CancellationToken cancellationToken);
 }
 
 public class TVService(ILogger<TVService> logger, AppDbContext dbContext, ITheMovieDatabaseService tmdbService) : ITVService
@@ -181,7 +183,13 @@ public class TVService(ILogger<TVService> logger, AppDbContext dbContext, ITheMo
             removedEpisodes.AddRange(removedEpisodesInSeason);
         }
         
-        await dbContext.Episodes.Where(e => removedEpisodes.Contains(e.Id)).ExecuteDeleteAsync(cancellationToken);        
+        await dbContext.Episodes.Where(e => removedEpisodes.Contains(e.Id)).ExecuteDeleteAsync(cancellationToken);
+        
+        // Get users that have this series.
+        var users = await dbContext.UserSeries
+            .Where(s => s.SeriesId == id)
+            .Select(s => s.UserId)
+            .ToListAsync(cancellationToken);        
         
         // Update or add new episodes
         foreach (var tmdbSeason in tmdbShow.Seasons)
@@ -202,12 +210,6 @@ public class TVService(ILogger<TVService> logger, AppDbContext dbContext, ITheMo
 
                     series.Episodes.Add(episode);
                     
-                    // Add episode to all users that are following the series
-                    var users = await dbContext.UserSeries
-                        .Where(s => s.SeriesId == id)
-                        .Select(s => s.UserId)
-                        .ToListAsync(cancellationToken);
-
                     // ReSharper disable once ForeachCanBePartlyConvertedToQueryUsingAnotherGetEnumerator
                     foreach (var user in users)
                     {
@@ -234,6 +236,18 @@ public class TVService(ILogger<TVService> logger, AppDbContext dbContext, ITheMo
         await dbContext.SaveChangesAsync(cancellationToken);
 
         return new Success();
+    }
+
+    public async Task<IEnumerable<WatchlistSeriesResponse>> GetWatchlist(string userId,
+        CancellationToken cancellationToken)
+    {
+        var series = await dbContext.UserSeries
+            .Include(s => s.Series)
+            .Include(s => s.Episodes)
+            .Where(s => s.UserId == userId && s.Episodes.Any(e => e.Watched == false && e.Episode.AirDate <= DateTime.UtcNow))
+            .ToListAsync(cancellationToken);
+        
+        return series.Select(s => new WatchlistSeriesResponse(s.SeriesId, s.Title ?? s.Series.OriginalTitle, s.Episodes.Count(e => e.Watched == false && e.Episode.AirDate <= DateTime.UtcNow)));
     }
     
     private async Task DownloadMoviePoster(TMDbShow tmdbShow, CancellationToken cancellationToken)

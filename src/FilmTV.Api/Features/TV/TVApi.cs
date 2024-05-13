@@ -62,10 +62,10 @@ public static class TVApi
                 return operation;
             });
         
-        // group.MapGet("/watchlist", WatchlistHandler)
-        //     .Produces<IEnumerable<WatchlistMovieResponse>>()
-        //     .WithSummary("Get unwatched movies")
-        //     .WithDescription("Get all unwatched movies from the user's watchlist.");
+        group.MapGet("/watchlist", WatchlistHandler)
+            .Produces<IEnumerable<WatchlistSeriesResponse>>()
+            .WithSummary("Get unwatched series")
+            .WithDescription("Get all unwatched tv series from the user's watchlist.");
         
         // group.MapPut("/{id:int}", UpdateHandler)
         //     .Produces<MovieResponse>()
@@ -136,5 +136,15 @@ public static class TVApi
             success => Results.NoContent(),
             notFound => Results.NotFound()
         );
-    }    
+    }
+
+    private static async Task<IResult> WatchlistHandler(ClaimsPrincipal user, ITVService tvService,
+        CancellationToken cancellationToken)
+    {
+        var userId = user.Identity?.Name ?? string.Empty;
+
+        var result = await tvService.GetWatchlist(userId, cancellationToken);
+                    
+        return Results.Ok(result);
+    } 
 }
