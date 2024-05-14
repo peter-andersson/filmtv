@@ -17,6 +17,8 @@ public interface ITVService
     Task<OneOf<Success, NotFound>> Refresh(int id, CancellationToken cancellationToken);
     
     Task<IEnumerable<WatchlistSeriesResponse>> GetWatchlist(string userId, CancellationToken cancellationToken);
+    
+    Task<OneOf<Success, NotFound>> Update(int id, SeriesUpdateRequest request, string userId, CancellationToken cancellationToken);
 }
 
 public class TVService(ILogger<TVService> logger, AppDbContext dbContext, ITheMovieDatabaseService tmdbService) : ITVService
@@ -248,6 +250,31 @@ public class TVService(ILogger<TVService> logger, AppDbContext dbContext, ITheMo
             .ToListAsync(cancellationToken);
         
         return series.Select(s => new WatchlistSeriesResponse(s.SeriesId, s.Title ?? s.Series.OriginalTitle, s.Episodes.Count(e => e.Watched == false && e.Episode.AirDate <= DateTime.UtcNow)));
+    }
+
+    public async Task<OneOf<Success, NotFound>> Update(int id, SeriesUpdateRequest request, string userId,
+        CancellationToken cancellationToken)
+    {
+        var series = await dbContext.UserSeries
+            .AsTracking()
+            .Where(s => s.SeriesId == id && s.UserId == userId)
+            .SingleOrDefaultAsync(cancellationToken);
+
+        if (series is null)
+        {
+            return new NotFound();
+        }
+
+        series.Title = request.Title;
+        if (series.Rating != request.Rating)
+        {
+            series.Rating = request.Rating;
+            series.RatingDate = DateTime.UtcNow;
+        }
+        
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        return new Success();
     }
     
     private async Task DownloadMoviePoster(TMDbShow tmdbShow, CancellationToken cancellationToken)

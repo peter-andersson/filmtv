@@ -67,17 +67,20 @@ public static class TVApi
             .WithSummary("Get unwatched series")
             .WithDescription("Get all unwatched tv series from the user's watchlist.");
         
-        // group.MapPut("/{id:int}", UpdateHandler)
-        //     .Produces<MovieResponse>()
-        //     .ProducesValidationProblem()
-        //     .Produces(StatusCodes.Status404NotFound)
-        //     .WithSummary("Update user data for a movie")
-        //     .WithDescription("Update user specific data for the movie. This can be the title, watched date or rating.")
-        //     .WithOpenApi(operation =>
-        //     {
-        //         operation.Parameters[0].Description = "Id for the movie";
-        //         return operation;
-        //     });         
+        group.MapPut("/{id:int}", UpdateHandler)
+            .Produces(StatusCodes.Status204NoContent)
+            .Produces(StatusCodes.Status404NotFound)
+            .WithSummary("Update a tv series")
+            .WithDescription("Update a tv series by specifying the id and the updated fields.")
+            .WithOpenApi(operation =>
+            {
+                operation.Parameters[0].Description = "Id for the tv series";
+                return operation;
+            });        
+        
+        
+        // TODO: Mark episode as watched/unwatched...
+                 
         
         return group;
     }
@@ -147,4 +150,21 @@ public static class TVApi
                     
         return Results.Ok(result);
     } 
+    
+    private static async Task<IResult> UpdateHandler(
+        int id,
+        SeriesUpdateRequest request,
+        ClaimsPrincipal user,
+        ITVService tvService,
+        CancellationToken cancellationToken)
+    {
+        var userId = user.Identity?.Name ?? string.Empty;
+
+        var result = await tvService.Update(id, request, userId, cancellationToken);
+
+        return result.Match(
+            success => Results.NoContent(),
+            notFound => Results.NotFound()
+        );
+    }    
 }
