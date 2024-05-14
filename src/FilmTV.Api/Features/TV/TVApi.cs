@@ -18,7 +18,7 @@ public static class TVApi
 
     private static RouteGroupBuilder MapTVApi(this RouteGroupBuilder group)
     {
-        group.MapPost("/{id:int}", AddHandler)
+        group.MapPost("/{seriesId:int}", AddHandler)
             .Produces<SeriesResponse>()
             .Produces(StatusCodes.Status404NotFound)
             .Produces(StatusCodes.Status409Conflict)
@@ -30,7 +30,7 @@ public static class TVApi
                 return operation;
             });  
         
-        group.MapDelete("/{id:int}", DeleteHandler)
+        group.MapDelete("/{seriesId:int}", DeleteHandler)
             .Produces(StatusCodes.Status204NoContent)
             .WithSummary("Remove a tv series")
             .WithDescription("Remove a tv series from the system.")
@@ -40,7 +40,7 @@ public static class TVApi
                 return operation;
             });
         
-        group.MapGet("/{id:int}", GetHandler)
+        group.MapGet("/{seriesId:int}", GetHandler)
             .Produces<SeriesResponse>()
             .Produces(StatusCodes.Status404NotFound)
             .WithSummary("Get a tv series")
@@ -51,7 +51,7 @@ public static class TVApi
                 return operation;
             });
         
-        group.MapPut("/refresh/{id:int}", RefreshHandler)
+        group.MapPut("/refresh/{seriesId:int}", RefreshHandler)
             .Produces(StatusCodes.Status204NoContent)
             .Produces(StatusCodes.Status404NotFound)
             .WithSummary("Update tv series data from the themoviedb.org")
@@ -67,7 +67,7 @@ public static class TVApi
             .WithSummary("Get unwatched series")
             .WithDescription("Get all unwatched tv series from the user's watchlist.");
         
-        group.MapPut("/{id:int}", UpdateHandler)
+        group.MapPut("/{seriesId:int}", UpdateHandler)
             .Produces(StatusCodes.Status204NoContent)
             .Produces(StatusCodes.Status404NotFound)
             .WithSummary("Update a tv series")
@@ -78,22 +78,30 @@ public static class TVApi
                 return operation;
             });        
         
-        
-        // TODO: Mark episode as watched/unwatched...
-                 
+        group.MapPut("/episode/{episodeId:int}/watched/{watched:bool}", MarkEpisodeAsWatchedHandler)
+            .Produces(StatusCodes.Status204NoContent)
+            .Produces(StatusCodes.Status404NotFound)
+            .WithSummary("Mark an episode as watched or unwatched")
+            .WithDescription("Mark an episode as watched or unwatched by specifying the series id, season number, episode number and a boolean indicating whether the episode is watched or not.")
+            .WithOpenApi(operation =>
+            {
+                operation.Parameters[0].Description = "Episode number";
+                operation.Parameters[1].Description = "Boolean indicating whether the episode is watched or not";
+                return operation;
+            });
         
         return group;
     }
     
     private static async Task<IResult> AddHandler(
-        int id,
+        int seriesId,
         ClaimsPrincipal user,
         ITVService tvService,
         CancellationToken cancellationToken)
     {
         var userId = user.Identity?.Name ?? string.Empty;
 
-        var result = await tvService.Add(id, userId, cancellationToken);
+        var result = await tvService.Add(seriesId, userId, cancellationToken);
 
         return result.Match(
             seriesResponse =>  Results.Ok(seriesResponse),
@@ -103,37 +111,37 @@ public static class TVApi
     }
     
     private static async Task<IResult> DeleteHandler(
-        int id,
+        int seriesId,
         ClaimsPrincipal user,
         ITVService tvService,
         CancellationToken cancellationToken)
     {
         var userId = user.Identity?.Name ?? string.Empty;
 
-        await tvService.Delete(id, userId, cancellationToken);
+        await tvService.Delete(seriesId, userId, cancellationToken);
 
         return Results.NoContent();
     }
     
     private static async Task<IResult> GetHandler(
-        int id,
+        int seriesId,
         ClaimsPrincipal user,
         ITVService tvService,
         CancellationToken cancellationToken)
     {
         var userId = user.Identity?.Name ?? string.Empty;
 
-        await tvService.Delete(id, userId, cancellationToken);
+        await tvService.Delete(seriesId, userId, cancellationToken);
 
         return Results.NoContent();
     }   
     
     private static async Task<IResult> RefreshHandler(
-        int id,
+        int seriesId,
         ITVService tvService,
         CancellationToken cancellationToken)
     {
-        var result = await tvService.Refresh(id, cancellationToken);
+        var result = await tvService.Refresh(seriesId, cancellationToken);
 
         return result.Match(
             success => Results.NoContent(),
@@ -152,7 +160,7 @@ public static class TVApi
     } 
     
     private static async Task<IResult> UpdateHandler(
-        int id,
+        int seriesId,
         SeriesUpdateRequest request,
         ClaimsPrincipal user,
         ITVService tvService,
@@ -160,11 +168,28 @@ public static class TVApi
     {
         var userId = user.Identity?.Name ?? string.Empty;
 
-        var result = await tvService.Update(id, request, userId, cancellationToken);
+        var result = await tvService.Update(seriesId, request, userId, cancellationToken);
 
         return result.Match(
             success => Results.NoContent(),
             notFound => Results.NotFound()
         );
     }    
+    
+    private static async Task<IResult> MarkEpisodeAsWatchedHandler(
+        int episodeId,
+        bool watched,
+        ClaimsPrincipal user,
+        ITVService tvService,
+        CancellationToken cancellationToken)
+    {
+        var userId = user.Identity?.Name ?? string.Empty;
+
+        var result = await tvService.MarkEpisodeAsWatched(episodeId, watched, userId, cancellationToken);
+
+        return result.Match(
+            success => Results.NoContent(),
+            notFound => Results.NotFound()
+        );
+    }
 }

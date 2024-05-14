@@ -19,6 +19,8 @@ public interface ITVService
     Task<IEnumerable<WatchlistSeriesResponse>> GetWatchlist(string userId, CancellationToken cancellationToken);
     
     Task<OneOf<Success, NotFound>> Update(int id, SeriesUpdateRequest request, string userId, CancellationToken cancellationToken);
+    
+    Task<OneOf<Success, NotFound>> MarkEpisodeAsWatched(int episodeId, bool watched, string userId, CancellationToken cancellationToken);
 }
 
 public class TVService(ILogger<TVService> logger, AppDbContext dbContext, ITheMovieDatabaseService tmdbService) : ITVService
@@ -272,6 +274,25 @@ public class TVService(ILogger<TVService> logger, AppDbContext dbContext, ITheMo
             series.RatingDate = DateTime.UtcNow;
         }
         
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        return new Success();
+    }
+
+    public async Task<OneOf<Success, NotFound>> MarkEpisodeAsWatched(int episodeId,
+        bool watched, string userId, CancellationToken cancellationToken)
+    {
+        var episode = await dbContext.UserEpisodes
+            .AsTracking()
+            .Where(e => e.EpisodeId == episodeId && e.UserId == userId)
+            .SingleOrDefaultAsync(cancellationToken);
+
+        if (episode is null)
+        {
+            return new NotFound();
+        }
+        
+        episode.Watched = watched;
         await dbContext.SaveChangesAsync(cancellationToken);
 
         return new Success();
