@@ -1,0 +1,37 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{5C173CED-BFE1-45B2-AD0E-8F9262CBD98A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FilmTV.Api", "src\FilmTV.Api\FilmTV.Api.csproj", "{6F30D794-66F7-452C-876E-F760195B54F3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FilmTV.App", "src\FilmTV.App\FilmTV.App.csproj", "{E234D950-E0F0-4952-954F-007181A87B2B}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{F754AF86-1A41-4755-971D-0282D669B6FA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FilmTV.Api.IntegrationTests", "tests\FilmTV.Api.IntegrationTests\FilmTV.Api.IntegrationTests.csproj", "{CD29E1F7-28F8-4955-836C-6E1F30F47ED7}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{6F30D794-66F7-452C-876E-F760195B54F3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6F30D794-66F7-452C-876E-F760195B54F3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6F30D794-66F7-452C-876E-F760195B54F3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6F30D794-66F7-452C-876E-F760195B54F3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E234D950-E0F0-4952-954F-007181A87B2B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E234D950-E0F0-4952-954F-007181A87B2B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E234D950-E0F0-4952-954F-007181A87B2B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E234D950-E0F0-4952-954F-007181A87B2B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CD29E1F7-28F8-4955-836C-6E1F30F47ED7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CD29E1F7-28F8-4955-836C-6E1F30F47ED7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CD29E1F7-28F8-4955-836C-6E1F30F47ED7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CD29E1F7-28F8-4955-836C-6E1F30F47ED7}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{6F30D794-66F7-452C-876E-F760195B54F3} = {5C173CED-BFE1-45B2-AD0E-8F9262CBD98A}
+		{E234D950-E0F0-4952-954F-007181A87B2B} = {5C173CED-BFE1-45B2-AD0E-8F9262CBD98A}
+		{CD29E1F7-28F8-4955-836C-6E1F30F47ED7} = {F754AF86-1A41-4755-971D-0282D669B6FA}
+	EndGlobalSection
+EndGlobal
