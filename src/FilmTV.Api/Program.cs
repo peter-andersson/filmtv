@@ -11,10 +11,7 @@ builder.Services.AddAuthorization();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
-    options.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
-    options.UseNpgsql(
-        builder.Configuration.GetConnectionString("DefaultConnection"),
-        o => o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
 
 builder.Services
@@ -94,3 +91,6 @@ if (app.Environment.IsDevelopment() || app.Configuration["AutomaticMigration"] =
 }
 
 app.Run();
+
+// For testing purposes
+public partial class Program { }
