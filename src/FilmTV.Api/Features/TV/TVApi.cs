@@ -2,6 +2,7 @@
 // ReSharper disable ConvertClosureToMethodGroup
 
 using System.Security.Claims;
+using FilmTV.Api.Common;
 
 namespace FilmTV.Api.Features.TV;
 
@@ -99,7 +100,7 @@ public static class TVApi
         ITVService tvService,
         CancellationToken cancellationToken)
     {
-        var userId = user.Identity?.Name ?? string.Empty;
+        var userId = user.GetUserId();
 
         var result = await tvService.Add(seriesId, userId, cancellationToken);
 
@@ -116,7 +117,7 @@ public static class TVApi
         ITVService tvService,
         CancellationToken cancellationToken)
     {
-        var userId = user.Identity?.Name ?? string.Empty;
+        var userId = user.GetUserId();
 
         await tvService.Delete(seriesId, userId, cancellationToken);
 
@@ -129,7 +130,7 @@ public static class TVApi
         ITVService tvService,
         CancellationToken cancellationToken)
     {
-        var userId = user.Identity?.Name ?? string.Empty;
+        var userId = user.GetUserId();
 
         await tvService.Delete(seriesId, userId, cancellationToken);
 
@@ -152,7 +153,7 @@ public static class TVApi
     private static async Task<IResult> WatchlistHandler(ClaimsPrincipal user, ITVService tvService,
         CancellationToken cancellationToken)
     {
-        var userId = user.Identity?.Name ?? string.Empty;
+        var userId = user.GetUserId();
 
         var result = await tvService.GetWatchlist(userId, cancellationToken);
                     
@@ -166,7 +167,7 @@ public static class TVApi
         ITVService tvService,
         CancellationToken cancellationToken)
     {
-        var userId = user.Identity?.Name ?? string.Empty;
+        var userId = user.GetUserId();
 
         var result = await tvService.Update(seriesId, request, userId, cancellationToken);
 
@@ -183,7 +184,7 @@ public static class TVApi
         ITVService tvService,
         CancellationToken cancellationToken)
     {
-        var userId = user.Identity?.Name ?? string.Empty;
+        var userId = user.GetUserId();
 
         var result = await tvService.MarkEpisodeAsWatched(episodeId, watched, userId, cancellationToken);
 

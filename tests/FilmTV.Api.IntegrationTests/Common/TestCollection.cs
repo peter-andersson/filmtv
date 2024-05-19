@@ -1,4 +1,4 @@
-namespace FilmTV.Api.IntegrationTests;
+namespace FilmTV.Api.IntegrationTests.Common;
 
 [CollectionDefinition("TestCollection")]
 public class TestCollection : ICollectionFixture<TestWebApplicationFactory<Program>>

@@ -45,10 +45,15 @@ public class MovieService(ILogger<MovieService> logger, AppDbContext dbContext, 
                 OriginalTitle = tmdbMovie.OriginalTitle,
                 OriginalLanguage = tmdbMovie.OriginalLanguage,
                 ImdbId = tmdbMovie.ImdbId,
-                ReleaseDate = tmdbMovie.ReleaseDate,
+                ReleaseDate = null,
                 RunTime = tmdbMovie.RunTime,
                 ETag = tmdbMovie.ETag
             };
+            
+            if (tmdbMovie.ReleaseDate is not null)
+            {
+                movie.ReleaseDate = new DateTime(tmdbMovie.ReleaseDate.Value.Day, tmdbMovie.ReleaseDate.Value.Month, tmdbMovie.ReleaseDate.Value.Day, 0, 0, 0, DateTimeKind.Utc);
+            }
 
             dbContext.Movies.Add(movie);
             
@@ -188,8 +193,15 @@ public class MovieService(ILogger<MovieService> logger, AppDbContext dbContext, 
             File.Delete(filename);
         }
 
-        await using var fileStream = new FileStream(filename, FileMode.Create);
-        await stream.CopyToAsync(fileStream, cancellationToken);
+        try
+        {
+            await using var fileStream = new FileStream(filename, FileMode.Create);
+            await stream.CopyToAsync(fileStream, cancellationToken);
+        }
+        catch (Exception e)
+        {
+            logger.LogError("Error saving movie poster: {Error}", e.Message);
+        }
     }
 
     private class UpdateMovieValidator : AbstractValidator<UpdateMovieRequest>

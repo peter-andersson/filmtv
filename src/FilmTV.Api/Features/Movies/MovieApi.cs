@@ -2,6 +2,7 @@
 // ReSharper disable ConvertClosureToMethodGroup
 
 using System.Security.Claims;
+using FilmTV.Api.Common;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FilmTV.Api.Features.Movies;
@@ -89,7 +90,7 @@ public static class MovieApi
         IMovieService movieService,
         CancellationToken cancellationToken)
     {
-        var userId = user.Identity?.Name ?? string.Empty;
+        var userId = user.GetUserId();
 
         var result = await movieService.Add(id, userId, cancellationToken);
 
@@ -106,7 +107,7 @@ public static class MovieApi
         IMovieService movieService,
         CancellationToken cancellationToken)
     {
-        var userId = user.Identity?.Name ?? string.Empty;
+        var userId = user.GetUserId();
 
         await movieService.Delete(id, userId, cancellationToken);
 
@@ -119,7 +120,7 @@ public static class MovieApi
         IMovieService movieService,
         CancellationToken cancellationToken)
     {
-        var userId = user.Identity?.Name ?? string.Empty;
+        var userId = user.GetUserId();
 
         var result = await movieService.Get(id, userId, cancellationToken);
 
@@ -144,7 +145,7 @@ public static class MovieApi
     
     private static async Task<IResult> WatchlistHandler(ClaimsPrincipal user, IMovieService movieService, CancellationToken cancellationToken)
     {
-        var userId = user.Identity?.Name ?? string.Empty;
+        var userId = user.GetUserId();
 
         var result = await movieService.GetWatchlist(userId, cancellationToken);
                     
@@ -158,7 +159,7 @@ public static class MovieApi
         IMovieService movieService,
         CancellationToken cancellationToken)
     {
-        var userId = user.Identity?.Name ?? string.Empty;
+        var userId = user.GetUserId();
 
         var result = await movieService.Update(id, userId, updateMovie, cancellationToken);
                 
