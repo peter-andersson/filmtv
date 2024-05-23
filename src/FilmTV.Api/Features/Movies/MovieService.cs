@@ -164,7 +164,14 @@ public class MovieService(ILogger<MovieService> logger, AppDbContext dbContext, 
          }
          
          userMovie.Title = updateMovie.Title;
-         userMovie.WatchedDate = updateMovie.WatchedDate;
+         if (updateMovie.WatchedDate.HasValue)
+         {
+             userMovie.WatchedDate = new DateTime(updateMovie.WatchedDate.Value.Ticks, DateTimeKind.Utc);
+         }
+         else
+         {
+             userMovie.WatchedDate = null;
+         }
          if (userMovie.Rating != updateMovie.Rating)
          {
              userMovie.Rating = updateMovie.Rating;

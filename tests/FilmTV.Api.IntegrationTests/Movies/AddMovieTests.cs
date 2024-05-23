@@ -19,7 +19,7 @@ public class AddMovieTests : BaseTest, IAsyncLifetime
     {
         // Arrange
         var client = _factory.HttpClient;
-        var movieId = 1;
+        const int movieId = 1;
 
         // Act
         var response = await client.PostAsync($"/movie/{movieId}", null);
@@ -33,7 +33,7 @@ public class AddMovieTests : BaseTest, IAsyncLifetime
     {
         // Arrange
         var client = _factory.HttpClient;
-        var movieId = 2;
+        const int movieId = 2;
 
         // Act
         var response = await client.PostAsync($"/movie/{movieId}", null);
@@ -50,7 +50,7 @@ public class AddMovieTests : BaseTest, IAsyncLifetime
     {
         // Arrange
         var client = _factory.HttpClient;
-        var movieId = 3;
+        const int movieId = 3;
 
         // Act
         var response = await client.PostAsync($"/movie/{movieId}", null);

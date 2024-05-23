@@ -1,6 +1,9 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using FilmTV.Api.Common;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+// ReSharper disable EntityFramework.ModelValidation.UnlimitedStringLength
 
 namespace FilmTV.Api.Features.Movies;
 
@@ -9,12 +12,9 @@ namespace FilmTV.Api.Features.Movies;
 /// </summary>
 public class UserMovie
 {
-    [Key, DatabaseGenerated(DatabaseGeneratedOption.None)]
     public int MovieId { get; init; }
-    [ForeignKey(nameof(MovieId))]
     public Movie Movie { get; init; } = null!;
 
-    [MaxLength(256)]
     public string? Title { get; set; }
 
     public DateTime? WatchedDate { get; set; }
@@ -23,7 +23,33 @@ public class UserMovie
 
     public DateTime? RatingDate { get; set; }
 
-    [MaxLength(50)]
     public string UserId { get; init; } = null!;
     public AppUser User { get; init; } = null!;
+}
+
+public class UserMovieConfiguration : IEntityTypeConfiguration<UserMovie>
+{
+    public void Configure(EntityTypeBuilder<UserMovie> builder)
+    {
+        builder.Property(m => m.MovieId)
+            .ValueGeneratedNever();
+
+        builder.Property(m => m.Title)
+            .HasMaxLength(256);
+
+        builder.Property(m => m.UserId)
+            .HasMaxLength(50);
+
+        builder.HasOne(m => m.Movie)
+            .WithMany()
+            .HasForeignKey(m => m.MovieId)
+            .OnDelete(DeleteBehavior.Cascade);
+        
+        builder.HasOne(m => m.User)
+            .WithMany()
+            .HasForeignKey(m => m.UserId)
+            .OnDelete(DeleteBehavior.Cascade);        
+            
+        builder.HasKey(x => new { x.MovieId, x.UserId });
+    }
 }
