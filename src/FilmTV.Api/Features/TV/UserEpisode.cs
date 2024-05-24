@@ -1,14 +1,14 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using FilmTV.Api.Common;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace FilmTV.Api.Features.TV;
 
 public class UserEpisode
 {
-    [Key, DatabaseGenerated(DatabaseGeneratedOption.None)]
     public int EpisodeId { get; set; }
-    [ForeignKey(nameof(EpisodeId))]
     public Episode Episode { get; set; } = null!;
     
     public bool Watched { get; set; }
@@ -18,6 +18,29 @@ public class UserEpisode
     public AppUser User { get; init; } = null!;  
     
     public int SeriesId { get; set; }
-    [ForeignKey(nameof(SeriesId))]
     public UserSeries UserSeries { get; set; } = null!;    
+}
+
+public class UserEpisodeConfiguration : IEntityTypeConfiguration<UserEpisode>
+{
+    public void Configure(EntityTypeBuilder<UserEpisode> builder)
+    {
+        builder.Property(m => m.EpisodeId)
+            .ValueGeneratedNever();
+
+        builder.HasKey(x => new { x.EpisodeId, x.UserId });        
+        
+        builder.Property(m => m.UserId)
+            .HasMaxLength(50);
+
+        builder.HasOne(m => m.UserSeries)
+            .WithMany()
+            .HasForeignKey(m => new {m.SeriesId, m.UserId})
+            .OnDelete(DeleteBehavior.Cascade);
+        
+        builder.HasOne(m => m.User)
+            .WithMany()
+            .HasForeignKey(m => m.UserId)
+            .OnDelete(DeleteBehavior.Cascade);        
+    }
 }

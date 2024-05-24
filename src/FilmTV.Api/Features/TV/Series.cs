@@ -1,11 +1,12 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace FilmTV.Api.Features.TV;
 
 public class Series
 {
-    [Key, DatabaseGenerated(DatabaseGeneratedOption.None)]
     public int Id { get; set; }
     
     public string ImdbId { get; set; } = string.Empty;
@@ -31,5 +32,21 @@ public class Series
             "ENDED" or "CANCELED" => DateTime.UtcNow.AddMonths(1),
             _ => DateTime.UtcNow.AddMonths(1),
         };
+    }
+}
+
+public class SeriesConfiguration : IEntityTypeConfiguration<Series>
+{
+    public void Configure(EntityTypeBuilder<Series> builder)
+    {
+        builder.Property(m => m.Id)
+            .ValueGeneratedNever();
+        
+        builder.HasKey(x  => x.Id);        
+        
+        builder.Property(m => m.ImdbId).HasMaxLength(50);
+        builder.Property(m => m.OriginalTitle).HasMaxLength(1024);
+        builder.Property(m => m.Status).HasMaxLength(50);
+        builder.Property(m => m.ETag).HasMaxLength(100);
     }
 }
