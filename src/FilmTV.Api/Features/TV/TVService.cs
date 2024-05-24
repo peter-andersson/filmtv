@@ -1,3 +1,4 @@
+using System.Data.Common;
 using FilmTV.Api.Common;
 using FilmTV.Api.Features.TheMovieDatabase;
 using Microsoft.EntityFrameworkCore;
@@ -76,7 +77,7 @@ public class TVService(ILogger<TVService> logger, AppDbContext dbContext, ITheMo
 
             dbContext.Series.Add(series);
 
-            await DownloadMoviePoster(tmdbShow, cancellationToken);
+            await DownloadPoster(tmdbShow, cancellationToken);
         }
         
         var userSeries = await dbContext.UserSeries
@@ -100,10 +101,10 @@ public class TVService(ILogger<TVService> logger, AppDbContext dbContext, ITheMo
             var userEpisode = new UserEpisode()
             {
                 Episode = episode,
+                UserSeries = userSeries,
                 UserId = userId,
                 Watched = false
             };
-            
             userSeries.Episodes.Add(userEpisode);
         }
 
@@ -155,7 +156,7 @@ public class TVService(ILogger<TVService> logger, AppDbContext dbContext, ITheMo
             return new Success();
         }
         
-        await DownloadMoviePoster(tmdbShow, cancellationToken);
+        await DownloadPoster(tmdbShow, cancellationToken);
 
         series.OriginalTitle = tmdbShow.Title;
         series.Status = tmdbShow.Status;
@@ -245,13 +246,22 @@ public class TVService(ILogger<TVService> logger, AppDbContext dbContext, ITheMo
     public async Task<IEnumerable<WatchlistSeriesResponse>> GetWatchlist(string userId,
         CancellationToken cancellationToken)
     {
-        var series = await dbContext.UserSeries
-            .Include(s => s.Series)
-            .Include(s => s.Episodes)
-            .Where(s => s.UserId == userId && s.Episodes.Any(e => e.Watched == false && e.Episode.AirDate <= DateTime.UtcNow))
+        var episodes = await dbContext.UserEpisodes
+            .TagWithCallSite()
+            .AsNoTracking()
+            .AsSplitQuery()
+            .Include(x => x.Episode)
+            .Include(x => x.UserSeries)
+            .ThenInclude(x => x.Series)
+            .Where(x => x.UserId == userId && x.Watched == false && x.Episode.AirDate <= DateTime.UtcNow)
             .ToListAsync(cancellationToken);
+
+        var series = episodes.Select(e => e.UserSeries);
         
-        return series.Select(s => new WatchlistSeriesResponse(s.SeriesId, s.Title ?? s.Series.OriginalTitle, s.Episodes.Count(e => e.Watched == false && e.Episode.AirDate <= DateTime.UtcNow)));
+        return series.Select(s => new WatchlistSeriesResponse(
+            s.SeriesId,
+            s.Title ?? s.Series.OriginalTitle,
+            s.Episodes.Count(e => e.Watched == false && e.Episode.AirDate <= DateTime.UtcNow)));
     }
 
     public async Task<OneOf<Success, NotFound>> Update(int id, SeriesUpdateRequest request, string userId,
@@ -298,7 +308,7 @@ public class TVService(ILogger<TVService> logger, AppDbContext dbContext, ITheMo
         return new Success();
     }
     
-    private async Task DownloadMoviePoster(TMDbShow tmdbShow, CancellationToken cancellationToken)
+    private async Task DownloadPoster(TMDbShow tmdbShow, CancellationToken cancellationToken)
     {
         var posterUrl = await tmdbService.GetImageUrl(tmdbShow.PosterPath);
         if (string.IsNullOrWhiteSpace(posterUrl))
@@ -315,7 +325,14 @@ public class TVService(ILogger<TVService> logger, AppDbContext dbContext, ITheMo
             File.Delete(filename);
         }
 
-        await using var fileStream = new FileStream(filename, FileMode.Create);
-        await stream.CopyToAsync(fileStream, cancellationToken);
+        try
+        {
+            await using var fileStream = new FileStream(filename, FileMode.Create);
+            await stream.CopyToAsync(fileStream, cancellationToken);
+        }
+        catch (Exception e)
+        {
+            logger.LogError("Error saving series poster: {Error}", e.Message);
+        }
     }    
 }

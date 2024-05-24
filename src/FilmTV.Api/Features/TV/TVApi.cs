@@ -132,9 +132,12 @@ public static class TVApi
     {
         var userId = user.GetUserId();
 
-        await tvService.Delete(seriesId, userId, cancellationToken);
-
-        return Results.NoContent();
+        var result = await tvService.Get(seriesId, userId, cancellationToken);
+        
+        return result.Match(
+            seriesResponse =>  Results.Ok(seriesResponse),
+            notFound => Results.NotFound()
+        );
     }   
     
     private static async Task<IResult> RefreshHandler(
