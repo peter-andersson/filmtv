@@ -1,7 +1,23 @@
 ﻿@page "/"
 
-<PageTitle>Home</PageTitle>
+<PageTitle>FilmTV</PageTitle>
 
-<h1>Hello, world!</h1>
+<h1>FilmTV</h1>
+<AuthorizeView>
+    <Authorized>
+        <p>TODO: Show watchlist here</p>
+    </Authorized>
+    <NotAuthorized>
+        <p>A simple tracker for watched movies and tv series.</p>
 
-Welcome to your new app.
+        <p>
+            <a class="btn btn-primary" href="Account/Login">
+                Login
+            </a>
+
+            <a class="btn btn-secondary" href="Account/Register">
+                Register
+            </a>
+        </p>        
+    </NotAuthorized>
+</AuthorizeView>

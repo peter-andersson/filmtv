@@ -6,6 +6,12 @@
 <div>
     <h2>Change your account settings</h2>
     <hr/>
+    <form action="Account/Logout" method="post">
+        <AntiforgeryToken/>
+        <input type="hidden" name="ReturnUrl" value="/"/>
+        <button type="submit" class="btn btn-lg btn-primary">Logout</button>
+    </form>
+    <hr/>
     <div class="row">
         <div class="col-md-3">
             <ManageNavMenu/>
