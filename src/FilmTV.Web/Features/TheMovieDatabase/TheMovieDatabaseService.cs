@@ -1,7 +1,8 @@
 using System.Net.Http.Headers;
 using System.Text.Json;
+using FilmTV.Api.Features.TheMovieDatabase;
 
-namespace FilmTV.Api.Features.TheMovieDatabase;
+namespace FilmTV.Web.Features.TheMovieDatabase;
 
 public interface ITheMovieDatabaseService
 {
@@ -26,7 +27,7 @@ public sealed class TheMovieDatabaseService : ITheMovieDatabaseService
     public TheMovieDatabaseService(ILogger<TheMovieDatabaseService> logger, IConfiguration configuration, IHttpClientFactory httpClientFactoryFactory)
     {
         _logger = logger;
-        _apiKey = configuration["TheMovieDbAccessToken"] ?? string.Empty;
+        _apiKey = configuration["Application:TheMovieDbAccessToken"] ?? string.Empty;
         _httpClientFactory = httpClientFactoryFactory;
     }
 

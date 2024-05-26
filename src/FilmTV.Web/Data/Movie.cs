@@ -15,7 +15,7 @@ public class Movie
 
     public string OriginalLanguage { get; init; } = string.Empty;
 
-    public DateTime? ReleaseDate { get; init; }
+    public DateTime? ReleaseDate { get; set; }
 
     public int? RunTime { get; init; }
     

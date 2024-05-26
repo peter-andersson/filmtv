@@ -1,7 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace FilmTV.Api.Features.TV;
+// ReSharper disable EntityFramework.ModelValidation.UnlimitedStringLength
+
+namespace FilmTV.Web.Data;
 
 public class Episode
 {
@@ -15,8 +17,8 @@ public class Episode
 
     public DateTime? AirDate { get; set; }
     
-    public int SeriesId { get; set; }
-    public Series Series { get; set; } = null!;
+    public int ShowId { get; set; }
+    public Show Show { get; set; } = null!;
 }
 
 public class EpisodeConfiguration : IEntityTypeConfiguration<Episode>
@@ -25,12 +27,9 @@ public class EpisodeConfiguration : IEntityTypeConfiguration<Episode>
     {
         builder.HasKey(x  => x.Id);        
         
-        builder.Property(m => m.Title)
-            .HasMaxLength(256);
-
-        builder.HasOne(m => m.Series)
+        builder.HasOne(m => m.Show)
             .WithMany(s => s.Episodes)
-            .HasForeignKey(m => m.SeriesId)
+            .HasForeignKey(m => m.ShowId)
             .OnDelete(DeleteBehavior.Cascade);
     }
 }

@@ -1,5 +1,4 @@
 using FilmTV.Api.Common;
-using FilmTV.Api.Features.TheMovieDatabase;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using OneOf;
@@ -9,8 +8,6 @@ namespace FilmTV.Api.Features.Movies;
 
 public interface IMovieService
 {
-    Task<OneOf<MovieResponse, NotFound, Conflict>> Add(int id, string userId, CancellationToken cancellationToken);
-    
     Task Delete(int id, string userId, CancellationToken cancellationToken);
     
     Task<OneOf<MovieResponse, NotFound>> Get(int id, string userId, CancellationToken cancellationToken);
@@ -22,195 +19,118 @@ public interface IMovieService
     Task<OneOf<MovieResponse, NotFound, ValidationError>> Update(int id, string userId, UpdateMovieRequest updateMovie, CancellationToken cancellationToken);
 }
 
-public class MovieService(ILogger<MovieService> logger, AppDbContext dbContext, ITheMovieDatabaseService tmdbService) : IMovieService
+public class MovieService(ILogger<MovieService> logger, AppDbContext dbContext) : IMovieService
 {
     private static readonly UpdateMovieValidator UpdateValidator = new();
     
-    public async Task<OneOf<MovieResponse, NotFound, Conflict>> Add(int id, string userId, CancellationToken cancellationToken)
-    {
-        var movie = await dbContext.Movies.Where(m => m.MovieId == id).FirstOrDefaultAsync(cancellationToken);
-
-        if (movie is null)
-        {
-            var tmdbMovie = await tmdbService.GetMovie(id, null);
-            if (tmdbMovie is null)
-            {
-                logger.LogError("Movie with id {MovieId} not found on themoviedb.org", id);
-                return new NotFound();
-            }
-
-            movie = new Movie
-            {
-                MovieId = tmdbMovie.Id,
-                OriginalTitle = tmdbMovie.OriginalTitle,
-                OriginalLanguage = tmdbMovie.OriginalLanguage,
-                ImdbId = tmdbMovie.ImdbId,
-                ReleaseDate = null,
-                RunTime = tmdbMovie.RunTime,
-                ETag = tmdbMovie.ETag
-            };
-            
-            if (tmdbMovie.ReleaseDate is not null)
-            {
-                movie.ReleaseDate = new DateTime(tmdbMovie.ReleaseDate.Value.Day, tmdbMovie.ReleaseDate.Value.Month, tmdbMovie.ReleaseDate.Value.Day, 0, 0, 0, DateTimeKind.Utc);
-            }
-
-            dbContext.Movies.Add(movie);
-            
-            await DownloadMoviePoster(tmdbMovie, cancellationToken);
-        }
-        
-        var userMovie = await dbContext.UserMovies
-            .Where(m => m.MovieId == id && m.UserId == userId)
-            .FirstOrDefaultAsync(cancellationToken);
-
-        if (userMovie is not null)
-        {
-            logger.LogError("User already has movie with id {Id}", id);
-            return new Conflict();
-        }
-
-        userMovie = new UserMovie
-        {
-            Movie = movie,
-            UserId = userId
-        };
-
-        dbContext.UserMovies.Add(userMovie);
-
-        await dbContext.SaveChangesAsync(cancellationToken);
-        
-        return userMovie.ToDto();
-    }
-    
     public async Task Delete(int id, string userId, CancellationToken cancellationToken)
     {
-        await dbContext.UserMovies
-             .Where(m => m.MovieId == id && m.UserId == userId)
-             .ExecuteDeleteAsync(cancellationToken);
+        // await dbContext.UserMovies
+        //      .Where(m => m.MovieId == id && m.UserId == userId)
+        //      .ExecuteDeleteAsync(cancellationToken);
+        
+        throw new NotImplementedException();
     }
 
     public async Task<OneOf<MovieResponse, NotFound>> Get(int id, string userId, CancellationToken cancellationToken)
     {
-         var userMovie = await dbContext.UserMovies
-             .Where(m => m.MovieId == id).Include(m => m.Movie)
-             .FirstOrDefaultAsync(cancellationToken);
+         // var userMovie = await dbContext.UserMovies
+         //     .Where(m => m.MovieId == id).Include(m => m.Movie)
+         //     .FirstOrDefaultAsync(cancellationToken);
+         //
+         // if (userMovie is null)
+         // {
+         //     return new NotFound();
+         // }
+         //
+         // return userMovie.ToDto();
 
-         if (userMovie is null)
-         {
-             return new NotFound();
-         }
-         
-         return userMovie.ToDto();
+         throw new NotImplementedException();
     }
     
     public async Task<IEnumerable<WatchlistMovieResponse>> GetWatchlist(string userId, CancellationToken cancellationToken)
     {
-        var movies = await dbContext.UserMovies
-            .Where(m => m.UserId == userId && m.WatchedDate == null)
-            .Include(m => m.Movie)
-            .ToListAsync(cancellationToken);
-
-        return movies.Select(userMovie => new WatchlistMovieResponse(userMovie.MovieId, userMovie.Title ?? userMovie.Movie.OriginalTitle));
+        // var movies = await dbContext.UserMovies
+        //     .Where(m => m.UserId == userId && m.WatchedDate == null)
+        //     .Include(m => m.Movie)
+        //     .ToListAsync(cancellationToken);
+        //
+        // return movies.Select(userMovie => new WatchlistMovieResponse(userMovie.MovieId, userMovie.Title ?? userMovie.Movie.OriginalTitle));
+        
+        throw new NotImplementedException();
     }
 
     public async Task<OneOf<Success, NotFound>> Refresh(int id, CancellationToken cancellationToken)
     {
-        var movie = await dbContext.Movies.AsTracking().Where(m => m.MovieId == id).FirstOrDefaultAsync(cancellationToken);
-
-         if (movie is null)
-         {
-             return new NotFound();
-         }
-
-         var tmdbMovie = await tmdbService.GetMovie(id, movie.ETag);
-         if (tmdbMovie is null)
-         {
-             return new Success();
-         }
-         
-         await DownloadMoviePoster(tmdbMovie, cancellationToken);
-
-         movie.OriginalTitle = tmdbMovie.OriginalTitle;
-         movie.OriginalLanguage = tmdbMovie.OriginalLanguage;
-         movie.ImdbId = tmdbMovie.ImdbId;
-         movie.ReleaseDate = tmdbMovie.ReleaseDate;
-         movie.RunTime = tmdbMovie.RunTime;
-         movie.ETag = tmdbMovie.ETag;
-
-         await dbContext.SaveChangesAsync(cancellationToken);
-         
-         return new Success();
+        // var movie = await dbContext.Movies.AsTracking().Where(m => m.MovieId == id).FirstOrDefaultAsync(cancellationToken);
+        //
+        //  if (movie is null)
+        //  {
+        //      return new NotFound();
+        //  }
+        //
+        //  var tmdbMovie = await tmdbService.GetMovie(id, movie.ETag);
+        //  if (tmdbMovie is null)
+        //  {
+        //      return new Success();
+        //  }
+        //  
+        //  await DownloadMoviePoster(tmdbMovie, cancellationToken);
+        //
+        //  movie.OriginalTitle = tmdbMovie.OriginalTitle;
+        //  movie.OriginalLanguage = tmdbMovie.OriginalLanguage;
+        //  movie.ImdbId = tmdbMovie.ImdbId;
+        //  movie.ReleaseDate = tmdbMovie.ReleaseDate;
+        //  movie.RunTime = tmdbMovie.RunTime;
+        //  movie.ETag = tmdbMovie.ETag;
+        //
+        //  await dbContext.SaveChangesAsync(cancellationToken);
+        //  
+        //  return new Success();
+        throw new NotImplementedException();
     }
     
     public async Task<OneOf<MovieResponse, NotFound, ValidationError>> Update(int id, string userId, UpdateMovieRequest updateMovie, CancellationToken cancellationToken)
     {
-            var validationResult = await UpdateValidator.ValidateAsync(updateMovie, cancellationToken);
-
-            if (!validationResult.IsValid)
-            {
-                return new ValidationError(validationResult.ToDictionary());
-            }
-         
-            var userMovie = await dbContext.UserMovies
-             .AsTracking()
-             .Include(m => m.Movie)
-             .Where(m => m.MovieId == id && m.UserId == userId)
-             .FirstOrDefaultAsync(cancellationToken);
-
-         if (userMovie is null)
-         {
-             return new NotFound();
-         }
-         
-         userMovie.Title = updateMovie.Title;
-         if (updateMovie.WatchedDate.HasValue)
-         {
-             userMovie.WatchedDate = new DateTime(updateMovie.WatchedDate.Value.Ticks, DateTimeKind.Utc);
-         }
-         else
-         {
-             userMovie.WatchedDate = null;
-         }
-         if (userMovie.Rating != updateMovie.Rating)
-         {
-             userMovie.Rating = updateMovie.Rating;
-             userMovie.RatingDate = DateTime.UtcNow;
-         }
-         
-         await dbContext.SaveChangesAsync(cancellationToken);
-
-         return userMovie.ToDto();
+         //    var validationResult = await UpdateValidator.ValidateAsync(updateMovie, cancellationToken);
+         //
+         //    if (!validationResult.IsValid)
+         //    {
+         //        return new ValidationError(validationResult.ToDictionary());
+         //    }
+         //
+         //    var userMovie = await dbContext.UserMovies
+         //     .AsTracking()
+         //     .Include(m => m.Movie)
+         //     .Where(m => m.MovieId == id && m.UserId == userId)
+         //     .FirstOrDefaultAsync(cancellationToken);
+         //
+         // if (userMovie is null)
+         // {
+         //     return new NotFound();
+         // }
+         //
+         // userMovie.Title = updateMovie.Title;
+         // if (updateMovie.WatchedDate.HasValue)
+         // {
+         //     userMovie.WatchedDate = new DateTime(updateMovie.WatchedDate.Value.Ticks, DateTimeKind.Utc);
+         // }
+         // else
+         // {
+         //     userMovie.WatchedDate = null;
+         // }
+         // if (userMovie.Rating != updateMovie.Rating)
+         // {
+         //     userMovie.Rating = updateMovie.Rating;
+         //     userMovie.RatingDate = DateTime.UtcNow;
+         // }
+         //
+         // await dbContext.SaveChangesAsync(cancellationToken);
+         //
+         // return userMovie.ToDto();
+         throw new NotImplementedException();
     }
-
-    private async Task DownloadMoviePoster(TMDbMovie tmdbMovie, CancellationToken cancellationToken)
-    {
-        var posterUrl = await tmdbService.GetImageUrl(tmdbMovie.PosterPath);
-        if (string.IsNullOrWhiteSpace(posterUrl))
-        {
-            return;
-        }
-
-        var stream = new MemoryStream();
-        await tmdbService.DownloadImageUrlToStream(posterUrl, stream);
-
-        var filename = ImagePath.MoviePath(tmdbMovie.Id);
-        if (File.Exists(filename))
-        {
-            File.Delete(filename);
-        }
-
-        try
-        {
-            await using var fileStream = new FileStream(filename, FileMode.Create);
-            await stream.CopyToAsync(fileStream, cancellationToken);
-        }
-        catch (Exception e)
-        {
-            logger.LogError("Error saving movie poster: {Error}", e.Message);
-        }
-    }
-
+    
     private class UpdateMovieValidator : AbstractValidator<UpdateMovieRequest>
     {
         public UpdateMovieValidator()

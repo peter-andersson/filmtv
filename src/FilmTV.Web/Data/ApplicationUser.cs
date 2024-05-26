@@ -9,4 +9,6 @@ public class ApplicationUser : IdentityUser
     public string? DisplayName { get; set; }
 
     public ICollection<UserMovie> Movies { get; set; } = [];
+    
+    public ICollection<UserShow> Shows { get; set; } = [];
 }

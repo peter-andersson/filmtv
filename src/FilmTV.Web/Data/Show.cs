@@ -1,13 +1,13 @@
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace FilmTV.Api.Features.TV;
+// ReSharper disable EntityFramework.ModelValidation.UnlimitedStringLength
 
-public class Series
+namespace FilmTV.Web.Data;
+
+public class Show
 {
-    public int Id { get; set; }
+    public int ShowId { get; set; }
     
     public string ImdbId { get; set; } = string.Empty;
 
@@ -35,18 +35,13 @@ public class Series
     }
 }
 
-public class SeriesConfiguration : IEntityTypeConfiguration<Series>
+public class SeriesConfiguration : IEntityTypeConfiguration<Show>
 {
-    public void Configure(EntityTypeBuilder<Series> builder)
+    public void Configure(EntityTypeBuilder<Show> builder)
     {
-        builder.Property(m => m.Id)
+        builder.Property(m => m.ShowId)
             .ValueGeneratedNever();
         
-        builder.HasKey(x  => x.Id);        
-        
-        builder.Property(m => m.ImdbId).HasMaxLength(50);
-        builder.Property(m => m.OriginalTitle).HasMaxLength(1024);
-        builder.Property(m => m.Status).HasMaxLength(50);
-        builder.Property(m => m.ETag).HasMaxLength(100);
+        builder.HasKey(x  => x.ShowId);        
     }
 }

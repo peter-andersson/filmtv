@@ -1,6 +1,7 @@
 using System.Text.Json.Serialization;
+using FilmTV.Api.Features.TheMovieDatabase;
 
-namespace FilmTV.Api.Features.TheMovieDatabase;
+namespace FilmTV.Web.Features.TheMovieDatabase;
 
 public sealed class Configuration
 {

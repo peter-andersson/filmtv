@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace FilmTV.Api.Features.TheMovieDatabase;
+namespace FilmTV.Web.Features.TheMovieDatabase;
 
 public sealed class Images
 {

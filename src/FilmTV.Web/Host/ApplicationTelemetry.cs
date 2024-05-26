@@ -7,7 +7,7 @@ namespace Microsoft.AspNetCore.Builder;
 
 public static class ApplicationTelemetry
 {
-    public static WebApplicationBuilder AddApplicationTelemetry(this WebApplicationBuilder builder)
+    public static void AddApplicationTelemetry(this WebApplicationBuilder builder)
     {
         builder.Logging.AddOpenTelemetry(logging =>
         {
@@ -38,13 +38,11 @@ public static class ApplicationTelemetry
         var useOtlpExporter = !string.IsNullOrWhiteSpace(builder.Configuration["OTEL_EXPORTER_OTLP_ENDPOINT"]);
         if (!useOtlpExporter)
         {
-            return builder;
+            return;
         }
 
         builder.Services.Configure<OpenTelemetryLoggerOptions>(logging => logging.AddOtlpExporter());
         builder.Services.ConfigureOpenTelemetryMeterProvider(metrics => metrics.AddOtlpExporter());
         builder.Services.ConfigureOpenTelemetryTracerProvider(tracing => tracing.AddOtlpExporter());
-
-        return builder;
     }
 }

@@ -1,10 +1,12 @@
 using System.Data.Common;
 using System.Net.Http.Headers;
+using FilmTV.Web.Data;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Npgsql;
@@ -29,9 +31,9 @@ public class TestWebApplicationFactory<TProgram>
     {
         builder.ConfigureServices(services =>
         {
-            services.RemoveAll<DbContextOptions<AppDbContext>>();
+            services.RemoveAll<DbContextOptions<ApplicationDbContext>>();
 
-            services.AddDbContext<AppDbContext>(options =>
+            services.AddDbContextFactory<ApplicationDbContext>(options =>
             {
                 options.UseNpgsql(_dbContainer.GetConnectionString());
             });
@@ -39,9 +41,7 @@ public class TestWebApplicationFactory<TProgram>
 
         builder.UseEnvironment("Development");
     }
-
-    public HttpClient HttpClient { get; private set; } = default!;
-
+    
     public async Task ResetDatabase()
     {
         await _respawner.ResetAsync(_dbConnection);
@@ -50,17 +50,9 @@ public class TestWebApplicationFactory<TProgram>
     public async Task InitializeAsync()
     {
         await _dbContainer.StartAsync();
-        
-        HttpClient = WithWebHostBuilder(builder =>
-            {
-                builder.ConfigureTestServices(services =>
-                {
-                    services.AddAuthentication(defaultScheme: "TestAuthentication")
-                        .AddScheme<AuthenticationSchemeOptions, TestAuthHandler>("TestAuthentication", null);
-                });
-            })
-            .CreateClient();
-        
+
+        CreateClient();
+
         _dbConnection = new NpgsqlConnection(_dbContainer.GetConnectionString());
         await _dbConnection.OpenAsync();
         _respawner = await Respawner.CreateAsync(_dbConnection, new RespawnerOptions()

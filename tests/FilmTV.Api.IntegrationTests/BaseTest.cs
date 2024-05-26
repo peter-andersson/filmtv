@@ -1,23 +1,21 @@
-using FilmTV.Api.Features.Movies;
-using FilmTV.Api.Features.TV;
+using FilmTV.Web.Data;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace FilmTV.Api.IntegrationTests;
 
 public class BaseTest
 {
-    protected static async Task SeedData(TestWebApplicationFactory<Program> factory)
+    public string UserId => "Test1";
+    
+    protected async Task SeedData(TestWebApplicationFactory<Program> factory)
     {
         using var scope = factory.Services.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
         // Create test users
-        var user1 = new AppUser() { Id = "Test1", UserName = "TestUser1", Email = "testuser1@example.com" };
+        var user1 = new ApplicationUser() { Id = UserId, UserName = "TestUser1", Email = "testuser1@example.com" };
         dbContext.Users.Add(user1);
-
-        var user2 = new AppUser() { Id = "Test2", UserName = "TestUser2", Email = "testuser2@example.com" };
-        dbContext.Users.Add(user2);
-
+        
         var movie = new Movie()
         {
             MovieId = 3,
@@ -33,45 +31,44 @@ public class BaseTest
         var userMovie = new UserMovie()
         {
             MovieId = 3,
-            UserId = "Test1",
+            ApplicationUserId = "Test1",
         };
         dbContext.UserMovies.Add(userMovie);
 
-        var series = new Series()
+        var show = new Show()
         {
-            Id = 4,
+            ShowId = 4,
             OriginalTitle = "Test Series",
             Status = "Ongoing",
             ETag = "test",
             NextUpdate = DateTime.UtcNow.AddDays(7)
         };
-        dbContext.Series.Add(series);
+        dbContext.Shows.Add(show);
 
         var episode = new Episode()
         {
-            SeriesId = 4,
+            Show = show,
             SeasonNumber = 1,
             EpisodeNumber = 1,
             AirDate = DateTime.UtcNow.AddDays(-1),
             Title = "test episode"
         };
-        dbContext.Episodes.Add(episode);
+        show.Episodes.Add(episode);
 
-        var userSeries = new UserSeries()
+        var userShow = new UserShow()
         {
-            SeriesId = 4,
-            UserId = "Test1"
+            Show = show,
+            ApplicationUserId = "Test1"
         };
-        dbContext.UserSeries.Add(userSeries);
+        dbContext.UserShows.Add(userShow);
 
         var userEpisode = new UserEpisode()
         {
-            UserSeries = userSeries,
             Episode = episode,
-            UserId = "Test1",
+            UserShow = userShow,
             Watched = false
         };
-        dbContext.UserEpisodes.Add(userEpisode);
+        userShow.UserEpisodes.Add(userEpisode);
 
         await dbContext.SaveChangesAsync();
     }

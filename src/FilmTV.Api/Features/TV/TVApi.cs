@@ -19,18 +19,6 @@ public static class TVApi
 
     private static RouteGroupBuilder MapTVApi(this RouteGroupBuilder group)
     {
-        group.MapPost("/{seriesId:int}", AddHandler)
-            .Produces<SeriesResponse>()
-            .Produces(StatusCodes.Status404NotFound)
-            .Produces(StatusCodes.Status409Conflict)
-            .WithSummary("Add a new tv series")
-            .WithDescription("Add a new tv series by specifying the id from themoviedb.org. If the tv series doesn't exist it will be fetched from themoviedb.org and then added to the system.")
-            .WithOpenApi(operation =>
-            {
-                operation.Parameters[0].Description = "Id for the tv series from themoviedb.org";
-                return operation;
-            });  
-        
         group.MapDelete("/{seriesId:int}", DeleteHandler)
             .Produces(StatusCodes.Status204NoContent)
             .WithSummary("Remove a tv series")
@@ -92,23 +80,6 @@ public static class TVApi
             });
         
         return group;
-    }
-    
-    private static async Task<IResult> AddHandler(
-        int seriesId,
-        ClaimsPrincipal user,
-        ITVService tvService,
-        CancellationToken cancellationToken)
-    {
-        var userId = user.GetUserId();
-
-        var result = await tvService.Add(seriesId, userId, cancellationToken);
-
-        return result.Match(
-            seriesResponse =>  Results.Ok(seriesResponse),
-            notFound => Results.NotFound(),
-            conflict => Results.Conflict()
-        );
     }
     
     private static async Task<IResult> DeleteHandler(

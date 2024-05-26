@@ -20,18 +20,6 @@ public static class MovieApi
     
     private static RouteGroupBuilder MapMovieApi(this RouteGroupBuilder group)
     {
-        group.MapPost("/{id:int}", AddHandler)
-            .Produces<MovieResponse>()
-            .Produces(StatusCodes.Status404NotFound)
-            .Produces(StatusCodes.Status409Conflict)
-            .WithSummary("Add a new movie")
-            .WithDescription("Add a new movie by specifying the id from themoviedb.org. If the movie doesn't exist it will be fetched from themoviedb.org and then added to the system.")
-            .WithOpenApi(operation =>
-            {
-                operation.Parameters[0].Description = "Id for the movie from themoviedb.org";
-                return operation;
-            });    
-        
         group.MapDelete("/{id:int}", DeleteHandler)
             .Produces(StatusCodes.Status204NoContent)
             .WithSummary("Delete a movie")
@@ -82,23 +70,6 @@ public static class MovieApi
              });        
 
         return group;
-    }
-    
-    private static async Task<IResult> AddHandler(
-        int id,
-        ClaimsPrincipal user,
-        IMovieService movieService,
-        CancellationToken cancellationToken)
-    {
-        var userId = user.GetUserId();
-
-        var result = await movieService.Add(id, userId, cancellationToken);
-
-        return result.Match(
-            movieDto => Results.Ok(movieDto),
-            notFound => Results.NotFound(),
-            conflict => Results.Conflict()
-        );
     }
     
     private static async Task<IResult> DeleteHandler(
