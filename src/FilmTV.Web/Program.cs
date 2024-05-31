@@ -7,7 +7,7 @@ using FilmTV.Web.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.AddApplicationTelemetry();
+builder.AddServiceDefaults();
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
@@ -25,10 +25,8 @@ builder.Services.AddAuthentication(options =>
     })
     .AddIdentityCookies();
 
-builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
-{
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
-});
+builder.AddNpgsqlDbContext<ApplicationDbContext>("postgres");
+builder.Services.AddDbContextFactory<ApplicationDbContext>();
 
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
