@@ -16,58 +16,49 @@ public class AddShowTests : BaseTest, IAsyncLifetime
      }
 
      [Fact]
-     public async Task AddTvShow_Should_Return_NotFound_For_Invalid_TvShowId()
+     public async Task AddTvShow_WhenIdIs0_ShouldReturnNotFound()
      {
-         // Arrange
-         const int showId = 999_999_999;
+         const int showId = 0;
          using var scope = _factory.Services.CreateScope();
-         var sut = scope.ServiceProvider.GetRequiredService<IAddHandler>();         
+         var sut = scope.ServiceProvider.GetRequiredService<IAddShow>();         
 
-         // Act
          var result = await sut.AddShow(showId, UserId);
-
-         // Assert
+         
          result.Switch(
-             response => true.Should().BeFalse(),
+             _ => true.Should().BeFalse(),
              notFound => notFound.Should().BeOfType<NotFound>(),
-             conflict => true.Should().BeFalse()
+             _ => true.Should().BeFalse()
          );
      }
      
      [Fact]
-     public async Task AddTvShow_Should_Return_SeriesResponse_For_Valid_TvShowId()
+     public async Task AddTvShow_WhenIdIs1_ShouldReturnResponse()
      {
-         // Arrange
          const int showId = 1;
          using var scope = _factory.Services.CreateScope();
-         var sut = scope.ServiceProvider.GetRequiredService<IAddHandler>();         
+         var sut = scope.ServiceProvider.GetRequiredService<IAddShow>();         
 
-         // Act
          var result = await sut.AddShow(showId, UserId);
 
-         // Assert
          result.Switch(
              response => response.Title.Should().NotBeNullOrWhiteSpace(),
-             notFound => true.Should().BeFalse(),
-             conflict => true.Should().BeFalse()
+             _ => true.Should().BeFalse(),
+             _ => true.Should().BeFalse()
          );
      }
 
      [Fact]
-     public async Task AddTvShow_Should_Return_Conflict_For_TvShow_The_User_Already_Have_Added()
+     public async Task AddTvShow_WhenIdIs4_ShouldReturnConflict()
      {
-         // Arrange
          const int showId = 4;
          using var scope = _factory.Services.CreateScope();
-         var sut = scope.ServiceProvider.GetRequiredService<IAddHandler>();         
+         var sut = scope.ServiceProvider.GetRequiredService<IAddShow>();         
 
-         // Act
          var result = await sut.AddShow(showId, UserId);
 
-         // Assert
          result.Switch(
-             response => true.Should().BeFalse(),
-             notFound => true.Should().BeFalse(),
+             _ => true.Should().BeFalse(),
+             _ => true.Should().BeFalse(),
              conflict => conflict.Should().BeOfType<Conflict>()
          );
      }

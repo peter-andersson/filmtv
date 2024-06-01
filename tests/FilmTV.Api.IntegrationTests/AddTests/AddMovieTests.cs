@@ -16,58 +16,49 @@ public class AddMovieTests : BaseTest, IAsyncLifetime
     }
     
     [Fact]
-    public async Task AddMovie_Should_Return_NotFound_For_Invalid_MovieId()
+    public async Task AddMovie_WhenIdIs1_ShouldReturnNotFound()
     {
-        // Arrange
         const int movieId = 1;
         using var scope = _factory.Services.CreateScope();
-        var sut = scope.ServiceProvider.GetRequiredService<IAddHandler>();
+        var sut = scope.ServiceProvider.GetRequiredService<IAddMovie>();
 
-        // Act
         var result = await sut.AddMovie(movieId, UserId);
         
-        // Assert
         result.Switch(
-            response => true.Should().BeFalse(),
+            _ => true.Should().BeFalse(),
             notFound => notFound.Should().BeOfType<NotFound>(),
-            conflict => true.Should().BeFalse()
+            _ => true.Should().BeFalse()
             );
     }
     
     [Fact]
-    public async Task AddMovie_Should_Return_MovieResponse_For_Valid_MovieId()
+    public async Task AddMovie_WhenIdIs2_ShouldReturnResponse()
     {
-        // Arrange
         const int movieId = 2;
         using var scope = _factory.Services.CreateScope();
-        var sut = scope.ServiceProvider.GetRequiredService<IAddHandler>();
+        var sut = scope.ServiceProvider.GetRequiredService<IAddMovie>();
 
-        // Act
         var result = await sut.AddMovie(movieId, UserId);
         
-        // Assert
         result.Switch(
             response => response.Title.Should().NotBeNullOrWhiteSpace(),
-            notFound => true.Should().BeFalse(),
-            conflict => true.Should().BeFalse()
+            _ => true.Should().BeFalse(),
+            _ => true.Should().BeFalse()
         );
     }
     
     [Fact]
-    public async Task AddMovie_Should_Return_Conflict_For_Movie_The_User_Already_Have_Added()
+    public async Task AddMovie_WhenIdIs3_ShouldReturnConflict()
     {
-        // Arrange
         const int movieId = 3;
         using var scope = _factory.Services.CreateScope();
-        var sut = scope.ServiceProvider.GetRequiredService<IAddHandler>();        
+        var sut = scope.ServiceProvider.GetRequiredService<IAddMovie>();        
     
-        // Act
         var result = await sut.AddMovie(movieId, UserId);
     
-        // Assert
         result.Switch(
-            response => true.Should().BeFalse(),
-            notFound => true.Should().BeFalse(),
+            _ => true.Should().BeFalse(),
+            _ => true.Should().BeFalse(),
             conflict => conflict.Should().BeOfType<Conflict>()
         );
     }    

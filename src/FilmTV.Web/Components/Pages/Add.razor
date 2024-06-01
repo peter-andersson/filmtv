@@ -7,7 +7,8 @@
 
 @attribute [Authorize]
 
-@inject IAddHandler AddHandler;
+@inject IAddMovie AddMovie;
+@inject IAddShow AddShow;
 
 <PageTitle>Add</PageTitle>
 
@@ -70,8 +71,8 @@
             var type = matches.Groups[1].Value.ToLowerInvariant();
             var result = type switch
             {
-                "movie" => await AddHandler.AddMovie(id, userId),
-                "tv" => await AddHandler.AddShow(id, userId),
+                "movie" => await AddMovie.AddMovie(id, userId),
+                "tv" => await AddShow.AddShow(id, userId),
                 _ => new NotFound(),
             };
             
