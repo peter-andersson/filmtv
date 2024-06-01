@@ -7,7 +7,7 @@ var postgres = builder.AddPostgres("postgresServer", password: postgresPassword)
     .WithPgAdmin(c => c.WithImageTag("8.7"))
     .AddDatabase("postgres");
 
-builder.AddProject<Projects.FilmTV_Web>("web")
+builder.AddProject<Projects.FilmTV_Web>("web", "https")
     .WithReference(postgres);
 
 builder.Build().Run();
