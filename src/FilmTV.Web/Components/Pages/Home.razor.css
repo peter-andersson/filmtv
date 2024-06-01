@@ -1,0 +1,23 @@
+.watchlist-item {
+    width: 185px;
+}
+
+.watchlist-caption {
+    font-size: .650rem;
+}
+
+.watchlist-title {
+    font-size: smaller;
+}
+
+.watchlist-subtitle1 {
+    font-size: small;
+}
+
+.watchlist-subtitle2 {
+    font-size: x-small;
+}
+
+.watchlist-figure {
+    margin: 0;
+}

@@ -1,23 +1,63 @@
 ﻿@page "/"
+@using System.Security.Claims
+@using FilmTV.Web.Features.Watchlist
+
+@inject IWatchlistHandler WatchlistHandler;
 
 <PageTitle>FilmTV</PageTitle>
 
-<h1>FilmTV</h1>
 <AuthorizeView>
     <Authorized>
-        <p>TODO: Show watchlist here</p>
+        <h4>Unwatched movies and episodes</h4>
+
+        <div class="d-flex flex-wrap justify-content-around justify-content-sm-start gap-2 mt-2">
+            @foreach (var item in Items)
+            {
+            <div class="watchlist-item">
+                <a href="@item.EditUrl"
+                   class="link-underline link-underline-opacity-0 link-underline-opacity-75-hover text-reset">
+                    <figure class="figure watchlist-figure">
+                        <img class="figure-img" src="@item.ImageUrl" alt="Cover image for @item.Title" width="185"
+                             height="278" />
+                        <figcaption class="figure-caption watchlist-caption">Image source TMDb</figcaption>
+                    </figure>
+
+                    <div class="text-truncate watchlist-title">@item.Title</div>
+                    <div class="text-truncate watchlist-subtitle1">@item.SubTitle1</div>
+                </a>
+            </div>
+            }
+        </div>
     </Authorized>
     <NotAuthorized>
+        <h1>FilmTV</h1>
+        
         <p>A simple tracker for watched movies and tv series.</p>
 
         <p>
-            <a class="btn btn-primary" href="Account/Login">
-                Login
-            </a>
-
-            <a class="btn btn-secondary" href="Account/Register">
-                Register
-            </a>
-        </p>        
+            @* ReSharper disable Html.PathError *@
+            <a class="btn btn-primary" href="Account/Login">Login</a>
+            <a class="btn btn-secondary" href="Account/Register">Register</a>
+            @* ReSharper restore Html.PathError *@
+        </p>
     </NotAuthorized>
 </AuthorizeView>
+
+@code {
+    [CascadingParameter] 
+    private Task<AuthenticationState> AuthenticationStateTask { get; set; } = null!;
+
+    private List<WatchlistItem> Items { get; set; } = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateTask;
+        var userId = authState.User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            return;
+        }
+
+        Items = await WatchlistHandler.Get(userId);
+    }
+}

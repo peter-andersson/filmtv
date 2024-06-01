@@ -4,6 +4,8 @@ using Microsoft.EntityFrameworkCore;
 using FilmTV.Web.Components;
 using FilmTV.Web.Components.Account;
 using FilmTV.Web.Data;
+using FilmTV.Web.Features.Posters;
+using Microsoft.Extensions.FileProviders;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -64,6 +66,14 @@ app.MapRazorComponents<App>()
 
 // Add additional endpoints required by the Identity /Account Razor components.
 app.MapAdditionalIdentityEndpoints();
+
+ImagePath.EnsureDirectories(app.Environment.ContentRootPath);
+
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(ImagePath.Path),
+    RequestPath = "/images"
+});
 
 if (app.Environment.IsDevelopment() || app.Configuration["AutomaticMigration"] == "1")
 {
