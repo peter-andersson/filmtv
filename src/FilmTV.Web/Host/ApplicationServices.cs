@@ -1,6 +1,9 @@
 using FilmTV.Web.Features.TheMovieDatabase;
 using FilmTV.Web.Features.Add;
+using FilmTV.Web.Features.Delete;
+using FilmTV.Web.Features.Get;
 using FilmTV.Web.Features.Posters;
+using FilmTV.Web.Features.Update;
 using FilmTV.Web.Features.Watchlist;
 
 // ReSharper disable once CheckNamespace
@@ -18,5 +21,8 @@ public static class ApplicationServices
         builder.Services.AddScoped<IAddMovie, AddMovieHandler>();
         builder.Services.AddScoped<IAddShow, AddShowHandler>();
         builder.Services.AddScoped<IWatchlistHandler, WatchlistHandler>();
+        builder.Services.AddScoped<IGetMovieHandler, GetMovieHandler>();
+        builder.Services.AddScoped<IUpdateMovieHandler, UpdateMovieHandler>();
+        builder.Services.AddScoped<IDeleteMovieHandler, DeleteMovieHandler>();
     }
 }
