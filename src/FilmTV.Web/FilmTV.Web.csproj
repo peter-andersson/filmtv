@@ -30,4 +30,20 @@
       <ProjectReference Include="..\FilmTV.ServiceDefaults\FilmTV.ServiceDefaults.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Compile Remove="app-data\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <EmbeddedResource Remove="app-data\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Content Remove="app-data\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Remove="app-data\**" />
+    </ItemGroup>
+
 </Project>
