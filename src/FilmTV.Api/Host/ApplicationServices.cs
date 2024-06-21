@@ -1,4 +1,3 @@
-using FilmTV.Api.Features.Movies;
 using FilmTV.Api.Features.TV;
 
 namespace FilmTV.Api.Host;
@@ -10,7 +9,6 @@ public static class ApplicationServices
     /// </summary>
     public static void AddApplicationServices(this WebApplicationBuilder builder)
     {
-        builder.Services.AddScoped<IMovieService, MovieService>();
         builder.Services.AddScoped<ITVService, TVService>();
     }
 }
