@@ -1,4 +1,6 @@
-@page "/EditMovie/{MovieId:int}"
+@page "/Edit/Movie/{MovieId:int}"
+
+@rendermode InteractiveServer
 
 @attribute [Authorize]
 
@@ -18,8 +20,8 @@
             <div class="row">
                 <div class="col-12">
                     <div class="form-floating mb-3">
-                        <InputText @bind-Value="Input.Title" class="form-control" autocomplete="off" aria-required="true"/>
-                        <label For="@(() => Input.Title)" class="form-label">Title</label>
+                        <InputText @bind-Value="Input.Title" autocomplete="off" aria-required="true" class="form-control" />
+                        <label For="@(() => Input.Title)">Title</label>
                         <ValidationMessage For="() => Input.Title" class="text-danger"/>
                     </div>
                 </div>
@@ -27,15 +29,15 @@
 
             <div class="row">
                 <div class="col-md-6 col-12">
-                    <div class="form-floating mb-3">
-                        <label class="control-label mb-1">Watched date</label>
+                    <div class="mb-3">
+                        <label class="form-label">Watched date</label>
                         <InputDate @bind-Value="Input.WatchedDate" class="form-control"/>
                     </div>
                 </div>
                 <div class="col-md-6 col-12">
-                    <div class="form-floating mb-3">
-                        <label class="control-label mb-1">Rating</label>
-                        <InputSelect @bind-Value="Input.Rating">
+                    <div class="mb-3">
+                        <label class="form-label">Rating</label>
+                        <InputSelect @bind-Value="Input.Rating" class="form-select">
                             <option value="0">No rating</option>
                             <option value="1">1</option>
                             <option value="2">2</option>
@@ -54,24 +56,24 @@
 
             <div class="row">
                 <div class="col-12">
-                    <div class="form-floating mb-3">
-                        <label class="control-label mb-1">Original title</label>
-                        <input value="@Input.OriginalTitle" class="form-control mb-1" disabled/>
+                    <div class="mb-3">
+                        <label class="form-label">Original title</label>
+                        <input value="@Input.OriginalTitle" class="form-control" disabled/>
                     </div>
                 </div>
             </div>
 
             <div class="row">
                 <div class="col-md-6 col-12">
-                    <div class="form-floating mb-3">
-                        <label class="control-label mb-1">Release date</label>
-                        <input value="@Input.ReleaseDate" class="form-control mb-1" disabled/>
+                    <div class="mb-3">
+                        <label class="form-label">Release date</label>
+                        <InputDate @bind-Value="Input.ReleaseDate" class="form-control" disabled/>
                     </div>
                 </div>
                 <div class="col-md-6 col-12">
-                    <div class="form-floating mb-3">
-                        <label class="control-label mb-1">Runtime</label>
-                        <input value="@Input.RuntimeString" class="form-control mb-1" disabled/>
+                    <div class="mb-3">
+                        <label class="form-label">Runtime</label>
+                        <input value="@Input.RuntimeString" class="form-control" disabled/>
                     </div>
                 </div>
             </div>
@@ -109,14 +111,13 @@ else
 
 @code {
     [SupplyParameterFromForm] private InputModel? Input { get; set; }
-    
-    [Parameter]
-    public int MovieId { get; set; }
-    
+
+    [Parameter] public int MovieId { get; set; }
+
     [CascadingParameter] private Task<AuthenticationState> AuthenticationStateTask { get; set; } = null!;
-    
+
     private string ErrorMessage { get; set; } = string.Empty;
-    
+
     private string SuccessMessage { get; set; } = string.Empty;
 
     private string UserId { get; set; } = string.Empty;
@@ -139,7 +140,7 @@ else
                 ReleaseDate = movie.ReleaseDate,
                 WatchedDate = movie.WatchedDate,
                 Runtime = movie.Runtime,
-                Rating = movie.Rating,
+                Rating = movie.Rating ?? 0,
                 TheMovieDbUrl = movie.TheMovieDbUrl,
                 ImdbUrl = movie.ImdbUrl
             },
@@ -152,8 +153,18 @@ else
     {
         SuccessMessage = string.Empty;
         ErrorMessage = string.Empty;
+
+        if (Input is null)
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(Input.Title))
+        {
+            Input.Title = null;
+        }
         
-        var response = await UpdateMovieHandler.Update(MovieId, UserId, Input?.Title, Input?.Rating, Input?.WatchedDate);
+        var response = await UpdateMovieHandler.Update(MovieId, UserId, Input.Title, Input.Rating == 0 ? null : Input.Rating, Input.WatchedDate);
         response.Match(
             // ReSharper disable once UnusedParameter.Local
             success => SuccessMessage = "Movie updated",
@@ -161,27 +172,26 @@ else
             notFound => ErrorMessage = "Move not found"
         );
     }
-    
+
     private async Task Delete()
     {
         await DeleteMovieHandler.Delete(MovieId, UserId);
 
         SuccessMessage = string.Empty;
-        ErrorMessage = string.Empty;        
-        Input = null; 
-    }    
+        ErrorMessage = string.Empty;
+        Input = null;
+    }
 
     private sealed class InputModel
     {
-        [Display(Name = "Original title")]
-        public string? OriginalTitle { get; init; }
-        
+        [Display(Name = "Original title")] public string? OriginalTitle { get; init; }
+
         public string? Title { get; set; } = string.Empty;
 
         [DataType(DataType.Date)]
         [DisplayFormat(DataFormatString = "{0:yyyy-MM-dd}")]
         [Display(Name = "Release date")]
-        public DateTime? ReleaseDate { get; init; }
+        public DateTime? ReleaseDate { get; set; }
 
         [DataType(DataType.Date)]
         [DisplayFormat(DataFormatString = "{0:yyyy-MM-dd}")]
@@ -189,7 +199,7 @@ else
         public DateTime? WatchedDate { get; set; }
 
         public int? Runtime { get; init; }
-        
+
         [Display(Name = "Runtime")]
         public string RuntimeString
         {
@@ -199,19 +209,17 @@ else
                 {
                     return string.Empty;
                 }
-                
+
                 var ts = TimeSpan.FromMinutes(Runtime.Value);
                 return ts.Hours > 0 ? $"{ts.Hours}h {ts.Minutes}m" : $"{ts.Minutes}m";
             }
         }
 
-        [Display(Name = "Rating")]
-        public int? Rating { get; set; }
+        [Display(Name = "Rating")] public int Rating { get; set; }
 
         public string TheMovieDbUrl { get; init; } = string.Empty;
 
         public string ImdbUrl { get; init; } = string.Empty;
-    }
     }
 
 }
