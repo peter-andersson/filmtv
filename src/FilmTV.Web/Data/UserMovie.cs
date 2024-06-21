@@ -12,13 +12,13 @@ public class UserMovie
     public int MovieId { get; init; }
     public Movie Movie { get; init; } = null!;
 
-    public string? Title { get; init; }
+    public string? Title { get; set; }
 
-    public DateTime? WatchedDate { get; init; }
+    public DateTime? WatchedDate { get; set; }
 
-    public int? Rating { get; init; }
+    public int? Rating { get; set; }
 
-    public DateTime? RatedAt { get; init; }
+    public DateTime? RatedAt { get; set; }
 
     public string ApplicationUserId { get; init; } = null!;
     public ApplicationUser ApplicationUser { get; init; } = null!;
