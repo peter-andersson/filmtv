@@ -10,7 +10,7 @@ public interface IGetMovieHandler
     Task<OneOf<Movie, NotFound>> Get(int movieId, string userId);
 }
 
-public class GetMovieHandler(IDbContextFactory<ApplicationDbContext> dbContextFactory)
+public class GetMovieHandler(IDbContextFactory<ApplicationDbContext> dbContextFactory) : IGetMovieHandler
 {
     public async Task<OneOf<Movie, NotFound>> Get(int movieId, string userId)
     {
@@ -20,7 +20,7 @@ public class GetMovieHandler(IDbContextFactory<ApplicationDbContext> dbContextFa
             .TagWithCallSite()
             .AsNoTracking()
             .Include(m => m.Movie)
-            .Where(m => m.ApplicationUserId == userId && m.WatchedDate == null)
+            .Where(m => m.ApplicationUserId == userId && m.MovieId == movieId)
             .Select(m => new Movie(
                     m.MovieId,
                     $"https://www.themoviedb.org/movie/{m.MovieId}",
