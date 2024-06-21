@@ -1,0 +1,217 @@
+@page "/EditMovie/{MovieId:int}"
+
+@attribute [Authorize]
+
+@inject IGetMovieHandler GetMovieHandler;
+@inject IUpdateMovieHandler UpdateMovieHandler;
+@inject IDeleteMovieHandler DeleteMovieHandler;
+
+<PageTitle>Edit movie</PageTitle>
+
+<h3>Edit movie</h3>
+
+@if (Input is not null)
+{
+    <div class="col-md-6 offset-md-3 mt-3">
+        <EditForm Model="Input" method="post" OnValidSubmit="Save" FormName="add">
+            <DataAnnotationsValidator/>
+            <div class="row">
+                <div class="col-12">
+                    <div class="form-floating mb-3">
+                        <InputText @bind-Value="Input.Title" class="form-control" autocomplete="off" aria-required="true"/>
+                        <label For="@(() => Input.Title)" class="form-label">Title</label>
+                        <ValidationMessage For="() => Input.Title" class="text-danger"/>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 col-12">
+                    <div class="form-floating mb-3">
+                        <label class="control-label mb-1">Watched date</label>
+                        <InputDate @bind-Value="Input.WatchedDate" class="form-control"/>
+                    </div>
+                </div>
+                <div class="col-md-6 col-12">
+                    <div class="form-floating mb-3">
+                        <label class="control-label mb-1">Rating</label>
+                        <InputSelect @bind-Value="Input.Rating">
+                            <option value="0">No rating</option>
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                            <option value="5">5</option>
+                            <option value="6">6</option>
+                            <option value="7">7</option>
+                            <option value="8">8</option>
+                            <option value="9">9</option>
+                            <option value="10">10</option>
+                        </InputSelect>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-12">
+                    <div class="form-floating mb-3">
+                        <label class="control-label mb-1">Original title</label>
+                        <input value="@Input.OriginalTitle" class="form-control mb-1" disabled/>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 col-12">
+                    <div class="form-floating mb-3">
+                        <label class="control-label mb-1">Release date</label>
+                        <input value="@Input.ReleaseDate" class="form-control mb-1" disabled/>
+                    </div>
+                </div>
+                <div class="col-md-6 col-12">
+                    <div class="form-floating mb-3">
+                        <label class="control-label mb-1">Runtime</label>
+                        <input value="@Input.RuntimeString" class="form-control mb-1" disabled/>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 col-12">
+                    <a href="@Input.TheMovieDbUrl">View on TheMovieDbUrl</a>
+                </div>
+                <div class="col-md-6 col-12">
+                    <a href="@Input.ImdbUrl">View on Imdb</a>
+                </div>
+            </div>
+
+            <div class="mt-2">
+                <button type="submit" class="btn btn-success">Save</button>
+                <button type="button" class="btn btn-danger" @onclick="Delete">Delete</button>
+            </div>
+        </EditForm>
+
+        @if (!string.IsNullOrWhiteSpace(SuccessMessage))
+        {
+            <div class="mt-3 alert alert-info" role="alert">@SuccessMessage</div>
+        }
+
+        @if (!string.IsNullOrWhiteSpace(ErrorMessage))
+        {
+            <div class="mt-3 alert alert-danger" role="alert">@ErrorMessage</div>
+        }
+    </div>
+}
+else
+{
+    <h4>Movie not found</h4>
+}
+
+@code {
+    [SupplyParameterFromForm] private InputModel? Input { get; set; }
+    
+    [Parameter]
+    public int MovieId { get; set; }
+    
+    [CascadingParameter] private Task<AuthenticationState> AuthenticationStateTask { get; set; } = null!;
+    
+    private string ErrorMessage { get; set; } = string.Empty;
+    
+    private string SuccessMessage { get; set; } = string.Empty;
+
+    private string UserId { get; set; } = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateTask;
+        UserId = authState.User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(UserId))
+        {
+            return;
+        }
+
+        var response = await GetMovieHandler.Get(MovieId, UserId);
+        response.Match(
+            movie => Input = new InputModel
+            {
+                OriginalTitle = movie.OriginalTitle,
+                Title = movie.Title,
+                ReleaseDate = movie.ReleaseDate,
+                WatchedDate = movie.WatchedDate,
+                Runtime = movie.Runtime,
+                Rating = movie.Rating,
+                TheMovieDbUrl = movie.TheMovieDbUrl,
+                ImdbUrl = movie.ImdbUrl
+            },
+            // ReSharper disable once UnusedParameter.Local
+            notFound => Input = null
+        );
+    }
+
+    public async Task Save()
+    {
+        SuccessMessage = string.Empty;
+        ErrorMessage = string.Empty;
+        
+        var response = await UpdateMovieHandler.Update(MovieId, UserId, Input?.Title, Input?.Rating, Input?.WatchedDate);
+        response.Match(
+            // ReSharper disable once UnusedParameter.Local
+            success => SuccessMessage = "Movie updated",
+            // ReSharper disable once UnusedParameter.Local
+            notFound => ErrorMessage = "Move not found"
+        );
+    }
+    
+    private async Task Delete()
+    {
+        await DeleteMovieHandler.Delete(MovieId, UserId);
+
+        SuccessMessage = string.Empty;
+        ErrorMessage = string.Empty;        
+        Input = null; 
+    }    
+
+    private sealed class InputModel
+    {
+        [Display(Name = "Original title")]
+        public string? OriginalTitle { get; init; }
+        
+        public string? Title { get; set; } = string.Empty;
+
+        [DataType(DataType.Date)]
+        [DisplayFormat(DataFormatString = "{0:yyyy-MM-dd}")]
+        [Display(Name = "Release date")]
+        public DateTime? ReleaseDate { get; init; }
+
+        [DataType(DataType.Date)]
+        [DisplayFormat(DataFormatString = "{0:yyyy-MM-dd}")]
+        [Display(Name = "Watched date")]
+        public DateTime? WatchedDate { get; set; }
+
+        public int? Runtime { get; init; }
+        
+        [Display(Name = "Runtime")]
+        public string RuntimeString
+        {
+            get
+            {
+                if (!Runtime.HasValue)
+                {
+                    return string.Empty;
+                }
+                
+                var ts = TimeSpan.FromMinutes(Runtime.Value);
+                return ts.Hours > 0 ? $"{ts.Hours}h {ts.Minutes}m" : $"{ts.Minutes}m";
+            }
+        }
+
+        [Display(Name = "Rating")]
+        public int? Rating { get; set; }
+
+        public string TheMovieDbUrl { get; init; } = string.Empty;
+
+        public string ImdbUrl { get; init; } = string.Empty;
+    }
+    }
+
+}
