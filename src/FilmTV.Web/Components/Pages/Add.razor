@@ -1,9 +1,4 @@
 @page "/Add"
-@using System.ComponentModel.DataAnnotations
-@using System.Security.Claims
-@using FilmTV.Web.Features.Add
-@using Microsoft.AspNetCore.Authorization
-@using OneOf.Types
 
 @attribute [Authorize]
 
@@ -12,13 +7,13 @@
 
 <PageTitle>Add</PageTitle>
 
-<h1>Add</h1>
+<h3>Add</h3>
 
 <div class="row">
     <EditForm Model="Input" method="post" OnValidSubmit="AddNew" FormName="add">
         <DataAnnotationsValidator/>
         <div class="form-floating mb-3">
-            <InputText @bind-Value="Input.Url" class="form-control" autocomplete="username" aria-required="true" placeholder="https://www.themoviedb.org"/>
+            <InputText @bind-Value="Input.Url" class="form-control" autocomplete="off" aria-required="true" placeholder="https://www.themoviedb.org"/>
             <label For="@(() => Input.Url)" class="form-label">TheMovieDb url</label>
             <ValidationMessage For="() => Input.Url" class="text-danger"/>
         </div>
